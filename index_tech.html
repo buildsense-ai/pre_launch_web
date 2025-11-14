@@ -314,6 +314,32 @@
             box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
         }
 
+        .btn-send-code {
+            padding: 12px 20px;
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            min-width: 120px;
+        }
+
+        .btn-send-code:hover:not(:disabled) {
+            background: #00b8e6;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-send-code:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
         .invite-note {
             text-align: center;
             margin-top: 16px;
@@ -936,7 +962,14 @@
                     <form id="registerForm">
                         <div class="form-group">
                             <label class="form-label">邮箱地址</label>
-                            <input type="email" class="form-input" placeholder="your@email.com" required>
+                            <input type="email" class="form-input" id="registerEmail" placeholder="your@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">验证码</label>
+                            <div style="display: flex; gap: 12px;">
+                                <input type="text" class="form-input" id="verifyCode" placeholder="请输入邮箱验证码" required style="flex: 1;">
+                                <button type="button" class="btn-send-code" id="sendCodeBtn" onclick="sendVerificationCode()">发送验证码</button>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">用户名</label>
@@ -944,7 +977,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">密码</label>
-                            <input type="password" class="form-input" placeholder="至少8个字符" required>
+                            <input type="password" class="form-input" id="registerPassword" placeholder="至少8个字符" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label">邀请码（可选）</label>
@@ -1063,16 +1096,103 @@
     </div>
 
     <script>
+        // 验证码相关
+        let sentVerificationCode = null;
+        let countdownTimer = null;
+
         // Smooth scroll
         function scrollToRegister() {
             document.getElementById('register').scrollIntoView({ behavior: 'smooth' });
         }
 
+        // 发送验证码
+        function sendVerificationCode() {
+            const email = document.getElementById('registerEmail').value;
+            const sendBtn = document.getElementById('sendCodeBtn');
+            
+            // 邮箱验证
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email)) {
+                alert('请先输入有效的邮箱地址');
+                return;
+            }
+            
+            // 生成6位验证码（模拟）
+            sentVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            // TODO: 这里实际应该调用后端API发送邮件
+            alert('验证码已发送到您的邮箱（模拟）\n验证码：' + sentVerificationCode);
+            
+            // 开始倒计时
+            let countdown = 60;
+            sendBtn.disabled = true;
+            sendBtn.textContent = countdown + '秒后重发';
+            
+            countdownTimer = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    sendBtn.textContent = countdown + '秒后重发';
+                } else {
+                    clearInterval(countdownTimer);
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = '发送验证码';
+                }
+            }, 1000);
+        }
+
         // Register form
         document.getElementById('registerForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            const email = document.getElementById('registerEmail').value;
+            const verifyCode = document.getElementById('verifyCode').value;
+            const password = document.getElementById('registerPassword').value;
             const inviteCode = document.getElementById('inviteCode').value;
             
+            // 邮箱验证
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('请输入有效的邮箱地址');
+                return;
+            }
+            
+            // 验证码检查
+            if (!sentVerificationCode) {
+                alert('请先发送验证码');
+                return;
+            }
+            
+            if (verifyCode !== sentVerificationCode) {
+                alert('验证码错误，请重新输入');
+                return;
+            }
+            
+            // 密码强度检查
+            if (password.length < 8) {
+                alert('密码至少需要8个字符');
+                return;
+            }
+            
+            // 检查过于简单的密码
+            const weakPasswords = ['12345678', '123456789', '11111111', '00000000', 'password', 'qwertyui', '88888888', '66666666'];
+            if (weakPasswords.includes(password.toLowerCase())) {
+                alert('密码过于简单，请设置更复杂的密码');
+                return;
+            }
+            
+            // 检查是否全是数字
+            if (/^\d+$/.test(password)) {
+                alert('密码不能全是数字，请包含字母或特殊字符');
+                return;
+            }
+            
+            // 检查是否全是相同字符
+            if (/^(.)\1+$/.test(password)) {
+                alert('密码不能全是相同字符');
+                return;
+            }
+            
+            // 验证通过
             if (inviteCode) {
                 alert('注册成功！正在跳转到应用...');
             } else {
