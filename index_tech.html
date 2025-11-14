@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>buildsense - 科技黑</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #000000;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #d1d5db;
+            text-decoration: none;
+            font-size: 14px;
+            opacity: 0.9;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover {
+            color: #00d4ff;
+            opacity: 1;
+        }
+
+        .btn-login {
+            padding: 8px 20px;
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-login:hover {
+            background: #00b8e6;
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            overflow: hidden;
+            background: #000000;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(90deg, rgba(0, 212, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(rgba(0, 212, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.15) 0%, transparent 50%);
+            animation: rotate 30s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(50px);
+            }
+        }
+
+        @keyframes rotate {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hero .container {
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            line-height: 1.3;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+            letter-spacing: -0.5px;
+        }
+
+        .hero-subtitle {
+            font-size: 22px;
+            font-weight: 400;
+            opacity: 0.85;
+            margin-bottom: 48px;
+            letter-spacing: 0.3px;
+            color: #a5f3fc;
+        }
+
+        .hero p {
+            font-size: 20px;
+            opacity: 0.95;
+            margin-bottom: 40px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            padding: 16px 40px;
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-primary:hover {
+            background: #00b8e6;
+            transform: translateY(-3px);
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.6);
+        }
+
+        .btn-secondary {
+            padding: 16px 40px;
+            background: transparent;
+            color: #00d4ff;
+            border: 2px solid #00d4ff;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: #00d4ff;
+            color: #000;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
+        }
+
+        /* Main Content */
+        .main-content {
+            background: #0a0a0a;
+            padding: 60px 0;
+        }
+
+        .section {
+            background: #1a1a1a;
+            border: 1px solid rgba(0, 212, 255, 0.1);
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.05);
+        }
+
+        .section h2 {
+            font-size: 32px;
+            margin-bottom: 24px;
+            color: #00d4ff;
+        }
+
+        .section p {
+            font-size: 16px;
+            color: #a5a5a5;
+            margin-bottom: 16px;
+        }
+
+        /* Register Form */
+        .register-form {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #d1d5db;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 6px;
+            font-size: 14px;
+            background: #0a0a0a;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+        }
+
+        .form-input::placeholder {
+            color: #666;
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: #00b8e6;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .invite-note {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        /* Roadmap */
+        .roadmap-grid {
+            display: grid;
+            gap: 32px;
+        }
+
+        .roadmap-phase {
+            padding: 32px;
+            background: #0a0a0a;
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            border-radius: 12px;
+        }
+
+        .phase-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .phase-title {
+            flex: 1;
+        }
+
+        .phase-title h3 {
+            font-size: 24px;
+            color: #00d4ff;
+            margin-bottom: 8px;
+        }
+
+        .phase-title .phase-version {
+            font-size: 14px;
+            color: #888;
+            font-weight: normal;
+        }
+
+        .roadmap-status {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .roadmap-status.live {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .roadmap-status.planned {
+            background: rgba(0, 212, 255, 0.1);
+            color: #00d4ff;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .roadmap-status.exploring {
+            background: rgba(168, 85, 247, 0.15);
+            color: #a855f7;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .phase-description {
+            font-size: 15px;
+            color: #b0b0b0;
+            line-height: 1.7;
+            margin-bottom: 24px;
+            padding-left: 4px;
+        }
+
+        .features-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .feature-item {
+            padding: 24px;
+            background: rgba(0, 212, 255, 0.03);
+            border: 1px solid rgba(0, 212, 255, 0.1);
+            border-radius: 8px;
+            transition: all 0.3s;
+            min-height: 180px;
+            position: relative;
+        }
+
+        .feature-item:hover {
+            background: rgba(0, 212, 255, 0.05);
+            border-color: rgba(0, 212, 255, 0.2);
+        }
+
+        .feature-content {
+            margin-bottom: 16px;
+        }
+
+        .feature-item h4 {
+            font-size: 17px;
+            color: #00d4ff;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .feature-description {
+            font-size: 14px;
+            color: #999;
+            line-height: 1.6;
+            margin-bottom: 0;
+            max-width: 65%;
+        }
+
+        .feature-media {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+        }
+
+        .media-item {
+            position: relative;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #000;
+            width: 140px;
+            flex-shrink: 0;
+        }
+
+        .media-item:hover {
+            border-color: #00d4ff;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.25);
+            transform: scale(1.02);
+        }
+
+        .media-item img,
+        .media-item video {
+            width: 100%;
+            height: 90px;
+            object-fit: cover;
+            display: block;
+        }
+
+
+        /* Image Lightbox Modal */
+        .image-lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .image-lightbox.active {
+            display: flex;
+        }
+
+        .lightbox-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+
+        .lightbox-content img,
+        .lightbox-content video {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 8px;
+            border: 2px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: none;
+            border: none;
+            color: #00d4ff;
+            font-size: 32px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .lightbox-close:hover {
+            color: #fff;
+            transform: rotate(90deg);
+        }
+
+        .lightbox-caption {
+            text-align: center;
+            margin-top: 16px;
+            color: #00d4ff;
+            font-size: 14px;
+        }
+
+        /* Join Us */
+        .join-form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Footer */
+        footer {
+            background: #000000;
+            color: white;
+            padding: 40px 0 20px;
+            border-top: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h3 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #00d4ff;
+        }
+
+        .footer-section a {
+            display: block;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            margin-bottom: 8px;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .footer-section a:hover {
+            color: #00d4ff;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 14px;
+            opacity: 0.6;
+        }
+
+        .github-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(0, 212, 255, 0.1);
+            color: #00d4ff;
+            text-decoration: none;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .github-link:hover {
+            background: #00d4ff;
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        /* Feedback Float Button */
+        .feedback-float-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .feedback-float-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.7);
+        }
+
+        /* Feedback Modal */
+        .feedback-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback-modal.active {
+            display: flex;
+        }
+
+        .feedback-modal-content {
+            background: #1a1a1a;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            padding: 32px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            color: #00d4ff;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #888;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-modal:hover {
+            color: #00d4ff;
+        }
+
+        .success-message {
+            display: none;
+            padding: 16px;
+            background: rgba(0, 212, 255, 0.1);
+            color: #00d4ff;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero {
+                min-height: 100vh;
+                padding: 0 20px;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+                margin-bottom: 16px;
+            }
+
+            .hero-subtitle {
+                font-size: 16px;
+                margin-bottom: 36px;
+            }
+
+            .hero p {
+                font-size: 16px;
+            }
+
+            .btn-primary, .btn-secondary {
+                padding: 14px 28px;
+                font-size: 16px;
+            }
+
+            .section {
+                padding: 24px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+
+            .header-nav {
+                display: none;
+            }
+
+            .feature-item {
+                min-height: auto;
+            }
+
+            .feature-description {
+                max-width: 100%;
+            }
+
+            .feature-media {
+                position: static;
+                margin-top: 16px;
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">buildsense</div>
+                <nav class="header-nav">
+                    <a href="#roadmap" class="nav-link">产品路线</a>
+                    <a href="#join" class="nav-link">加入我们</a>
+                    <button class="btn-login" onclick="scrollToRegister()">注册/登录</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>将零散的研究资料<br>转化为可以直接交付的专业报告</h1>
+            <p class="hero-subtitle">严肃的科研工作需要100%的可验证性</p>
+            <div class="hero-buttons">
+                <a href="mock_demo.html" class="btn-primary">进入应用</a>
+                <a href="#register" class="btn-secondary">申请试用</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container">
+            <!-- Roadmap Section -->
+            <div class="section" id="roadmap">
+                <h2>产品路线图</h2>
+                <p style="margin-bottom: 32px;">我们正在快速迭代，以下是已交付的核心功能与未来的开发重点。</p>
+                <div class="roadmap-grid">
+                    
+                    <!-- Phase 1: V0.1 -->
+                    <div class="roadmap-phase">
+                        <div class="phase-header">
+                            <div class="phase-title">
+                                <h3>阶段一 <span class="phase-version">(V0.1)</span></h3>
+                                <p style="font-size: 16px; color: #d1d5db; margin-top: 4px;">核心工作流引擎</p>
+                            </div>
+                            <span class="roadmap-status live">已上线</span>
+                        </div>
+                        <div class="phase-description">
+                            V0.1 版本的核心功能已交付。一个端到端的"报告转化引擎"已部署，其功能为后续的智能重构奠定了基础。
+                        </div>
+                        
+                        <div class="features-list">
+                            <!-- Feature 1 -->
+                            <div class="feature-item">
+                                <div class="feature-content">
+                                    <h4>知识库引擎 (私有信源)</h4>
+                                    <div class="feature-description">
+                                        支持零碎研究资料与数据的上传、管理和归档，作为 RAG 系统的核心信源。也支持内置深度搜索，用户确认后的搜索报告亦可被知识库化。
+                                    </div>
+                                </div>
+                                <div class="feature-media">
+                                    <div class="media-item" onclick="openLightbox(this)">
+                                        <img src="构建知识库截图1.png" alt="文件处理选择：PDF解析或模板提取">
+                                    </div>
+                                    <div class="media-item" onclick="openLightbox(this)">
+                                        <img src="构建知识库2.png" alt="AI对话助手与深度研究">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Feature 2 -->
+                            <div class="feature-item">
+                                <div class="feature-content">
+                                    <h4>模板提取与匹配引擎</h4>
+                                    <div class="feature-description">
+                                        支持上传范例大纲，AI 自动提取写作范式。生成时可自动匹配或手动指定模板。
+                                    </div>
+                                </div>
+                                <div class="feature-media">
+                                    <div class="media-item" onclick="openLightbox(this)">
+                                        <img src="模版2.png" alt="AI智能匹配模板">
+                                    </div>
+                                    <div class="media-item" onclick="openLightbox(this)">
+                                        <img src="模版.png" alt="模板推荐与选择">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Feature 3 -->
+                            <div class="feature-item">
+                                <div class="feature-content">
+                                    <h4>初稿生成器 (V1 - 并行)</h4>
+                                    <div class="feature-description">
+                                        基于知识库与选定模板，响应用户请求，（V1 采用并行模式）快速生成结构化的文档初稿。
+                                    </div>
+                                </div>
+                                <div class="feature-media">
+                                    <div class="media-item" onclick="openLightbox(this)">
+                                        <img src="一件生成报告.gif" alt="一键生成报告演示">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Feature 4 -->
+                            <div class="feature-item">
+                                <div class="feature-content">
+                                    <h4>AI 辅助编辑 (与 Diff Bot)</h4>
+                                    <div class="feature-description">
+                                        提供框选精修、全局审阅等 AI 辅助工具。Diff Bot 确保迭代过程中的变更清晰可控。
+                                    </div>
+                                </div>
+                                <div class="feature-media">
+                                    <div class="media-item" onclick="openLightbox(this)">
+                                        <img src="辅助编辑1.gif" alt="AI辅助编辑功能演示">
+                                    </div>
+                                    <div class="media-item" onclick="openLightbox(this)">
+                                        <img src="辅助编辑2.gif" alt="Diff Bot变更对比演示">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phase 2: V0.2 -->
+                    <div class="roadmap-phase">
+                        <div class="phase-header">
+                            <div class="phase-title">
+                                <h3>阶段二 <span class="phase-version">(V0.2)</span></h3>
+                                <p style="font-size: 16px; color: #d1d5db; margin-top: 4px;">序列化生成引擎 (含动态干预)</p>
+                            </div>
+                            <span class="roadmap-status planned">计划中</span>
+                        </div>
+                        <div class="phase-description">
+                            V1 的"并行"生成器将被重构。V0.2 将引入"序列计划 (Sequential Plan)"架构，主 Agent 将智能规划生成顺序（先核心章节，后辅助章节），以确保高质量长文的逻辑连贯性。该架构将支持在生成过程中实时干预：用户可随时插入新指令（例如，对已生成章节进行修改），智能规划器将自动审视并动态调整后续的"序列计划"，确保变更被一致性地执行。
+                        </div>
+                    </div>
+
+                    <!-- Phase 3: V0.3 -->
+                    <div class="roadmap-phase">
+                        <div class="phase-header">
+                            <div class="phase-title">
+                                <h3>阶段三 <span class="phase-version">(V0.3)</span></h3>
+                                <p style="font-size: 16px; color: #d1d5db; margin-top: 4px;">深度编辑与交互智能</p>
+                            </div>
+                            <span class="roadmap-status exploring">探索中</span>
+                        </div>
+                        <div class="phase-description">
+                            在 V0.2 的高质量初稿基础上，V0.3 将专注打磨"后期编辑"体验。开发重点包括 "Cursor" 风格的智能辅助、图文排版工具、以及精准的"关联修改"检查器，全面提升编辑环节的智能性与效率。
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- GitHub Footer Note -->
+                <div style="margin-top: 48px; padding-top: 32px; border-top: 1px solid rgba(0, 212, 255, 0.1); text-align: center;">
+                    <h3 style="font-size: 18px; color: #00d4ff; margin-bottom: 12px;">关注我们的进展</h3>
+                    <p style="font-size: 14px; color: #999; margin-bottom: 20px;">您可以在我们的 GitHub 仓库上跟踪本路线图的实际开发进展。</p>
+                    <a href="https://github.com/yourusername/buildsense" target="_blank" class="github-link">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        访问 GitHub 仓库
+                    </a>
+                </div>
+            </div>
+
+            <!-- Register Section -->
+            <div class="section" id="register">
+                <h2>注册试用</h2>
+                <div class="register-form">
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label class="form-label">邮箱地址</label>
+                            <input type="email" class="form-input" placeholder="your@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">用户名</label>
+                            <input type="text" class="form-input" placeholder="选择一个用户名" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">密码</label>
+                            <input type="password" class="form-input" placeholder="至少8个字符" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">邀请码（可选）</label>
+                            <input type="text" class="form-input" id="inviteCode" placeholder="如有邀请码请输入">
+                        </div>
+                        <button type="submit" class="submit-btn">注册</button>
+                        <p class="invite-note">没有邀请码？没关系！注册后将加入等候名单，我们会尽快为您开通访问权限</p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Join Us Section -->
+            <div class="section" id="join">
+                <h2>加入我们</h2>
+                <p style="margin-bottom: 32px;">我们正在寻找志同道合的伙伴，一起构建可信赖的智能未来</p>
+                <div class="join-form">
+                    <form id="joinForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">姓名</label>
+                                <input type="text" class="form-input" placeholder="您的姓名" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">邮箱</label>
+                                <input type="email" class="form-input" placeholder="your@email.com" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">感兴趣的职位</label>
+                            <input type="text" class="form-input" placeholder="如：产品经理、前端工程师等">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">简单介绍一下自己</label>
+                            <textarea class="form-input" placeholder="您的技能、经验或想法..."></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn">提交申请</button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>buildsense</h3>
+                    <p style="font-size: 14px; opacity: 0.7;">将零散的研究资料，转化为可以直接交付的专业报告</p>
+                </div>
+                <div class="footer-section">
+                    <h3>产品</h3>
+                    <a href="mock_demo.html">Web 应用</a>
+                    <a href="#roadmap">产品路线</a>
+                    <a href="#register">申请试用</a>
+                </div>
+                <div class="footer-section">
+                    <h3>关于</h3>
+                    <a href="#join">加入我们</a>
+                    <a href="https://github.com/yourusername/buildsense" target="_blank">GitHub</a>
+                </div>
+                <div class="footer-section">
+                    <h3>联系方式</h3>
+                    <a href="mailto:contact@buildsense.ai">contact@buildsense.ai</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                2025 buildsense. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Feedback Float Button -->
+    <button class="feedback-float-btn" onclick="openFeedbackModal()" title="有新点子？点这里提交">💡</button>
+
+    <!-- Image Lightbox -->
+    <div class="image-lightbox" id="imageLightbox">
+        <div class="lightbox-content">
+            <button class="lightbox-close" onclick="closeLightbox()">×</button>
+            <div id="lightboxMedia"></div>
+            <div class="lightbox-caption" id="lightboxCaption"></div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div class="feedback-modal" id="feedbackModal">
+        <div class="feedback-modal-content">
+            <div class="modal-header">
+                <h3>提交反馈或建议</h3>
+                <button class="close-modal" onclick="closeFeedbackModal()">×</button>
+            </div>
+            <form id="feedbackForm">
+                <div class="form-group">
+                    <label class="form-label">反馈类型</label>
+                    <select class="form-input">
+                        <option>功能建议</option>
+                        <option>问题反馈</option>
+                        <option>其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">您的邮箱（可选）</label>
+                    <input type="email" class="form-input" placeholder="如需回复请留下邮箱">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">详细说明</label>
+                    <textarea class="form-input" rows="6" placeholder="请详细描述您的想法或遇到的问题..." required></textarea>
+                </div>
+                <button type="submit" class="submit-btn">提交</button>
+                <div class="success-message" id="feedbackSuccess">
+                    感谢您的反馈！我们会认真考虑您的建议
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Smooth scroll
+        function scrollToRegister() {
+            document.getElementById('register').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Register form
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const inviteCode = document.getElementById('inviteCode').value;
+            
+            if (inviteCode) {
+                alert('注册成功！正在跳转到应用...');
+            } else {
+                alert('注册成功！您已加入等候名单，我们会尽快通过邮件通知您开通访问权限。');
+            }
+        });
+
+        // Join form
+        document.getElementById('joinForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('感谢您的申请！我们会尽快与您联系。');
+            this.reset();
+        });
+
+        // Image Lightbox
+        function openLightbox(mediaElement) {
+            const lightbox = document.getElementById('imageLightbox');
+            const lightboxMedia = document.getElementById('lightboxMedia');
+            const lightboxCaption = document.getElementById('lightboxCaption');
+            
+            // Get the content from the clicked item
+            const img = mediaElement.querySelector('img');
+            const video = mediaElement.querySelector('video');
+            
+            // Clear previous content
+            lightboxMedia.innerHTML = '';
+            lightboxCaption.textContent = '';
+            
+            if (img) {
+                // If there's an actual image, clone it
+                const imgClone = img.cloneNode(true);
+                lightboxMedia.appendChild(imgClone);
+                
+                // Set caption from alt text
+                if (img.alt) {
+                    lightboxCaption.textContent = img.alt;
+                }
+            } else if (video) {
+                // If there's a video, clone it
+                const videoClone = video.cloneNode(true);
+                videoClone.controls = true;
+                videoClone.autoplay = true;
+                lightboxMedia.appendChild(videoClone);
+            }
+            
+            // Show lightbox
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('imageLightbox');
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+            
+            // Stop any playing video
+            const video = document.querySelector('#lightboxMedia video');
+            if (video) {
+                video.pause();
+            }
+        }
+
+        // Close lightbox on background click
+        document.getElementById('imageLightbox').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLightbox();
+            }
+        });
+
+        // Close lightbox on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLightbox();
+                closeFeedbackModal();
+            }
+        });
+
+        // Feedback modal
+        function openFeedbackModal() {
+            document.getElementById('feedbackModal').classList.add('active');
+        }
+
+        function closeFeedbackModal() {
+            document.getElementById('feedbackModal').classList.remove('active');
+        }
+
+        // Close modal on background click
+        document.getElementById('feedbackModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeFeedbackModal();
+            }
+        });
+
+        // Feedback form
+        document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const successMsg = document.getElementById('feedbackSuccess');
+            successMsg.classList.add('show');
+            this.reset();
+            
+            setTimeout(() => {
+                successMsg.classList.remove('show');
+                closeFeedbackModal();
+            }, 2000);
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+

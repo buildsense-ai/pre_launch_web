@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>buildsense - AI 对话助手 Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 主题变量 */
+        :root {
+            --primary-color: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --secondary-color: #a78bfa;
+            --accent-color: #06b6d4;
+            --success-color: #10b981;
+            
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #f5f5f5;
+            --bg-hover: #f0f0f0;
+            --bg-active: #ede9fe;
+            
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-tertiary: #999999;
+            --text-inverse: #ffffff;
+            
+            --border-color: #e0e0e0;
+            --border-light: #f0f0f0;
+            
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1);
+            
+            --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* ========== 左侧边栏 ========== */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 16px;
+        }
+
+        .settings-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-secondary);
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .settings-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .chat-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .new-chat-btn {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--gradient-primary);
+            color: var(--text-inverse);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .new-chat-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .back-btn {
+            background: white !important;
+            color: var(--text-secondary) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+
+        .back-btn:hover {
+            background: var(--bg-hover) !important;
+        }
+
+        /* 标签页 */
+        .sidebar-tabs {
+            display: flex;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-tab {
+            flex: 1;
+            padding: 12px 16px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .sidebar-tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+        }
+
+        .sidebar-tab.active {
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            font-weight: 500;
+        }
+
+        .sidebar-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 文件列表 */
+        .files-section {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .files-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+
+        .files-section-title {
+            font-weight: 500;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .caret {
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+
+        .files-section.collapsed .caret {
+            transform: rotate(-90deg);
+        }
+
+        .files-count {
+            background: var(--bg-primary);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .files-section-content {
+            display: block;
+        }
+
+        .files-section.collapsed .files-section-content {
+            display: none;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-primary);
+            transition: background 0.2s;
+        }
+
+        .file-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .file-item.active {
+            background: var(--bg-active);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .file-icon {
+            font-size: 16px;
+        }
+
+        /* 对话历史 */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .history-item {
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .history-item:hover {
+            background: var(--bg-hover);
+            transform: translateX(2px);
+        }
+
+        .history-title {
+            font-size: 13px;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .history-time {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        /* ========== 中间聊天区 ========== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-title-section {
+            text-align: center;
+            flex: 1;
+        }
+
+        .chat-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .project-info {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .welcome-prompts {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .welcome-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* 消息样式 */
+        .chat-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+        }
+
+        .message.user .message-avatar {
+            background: var(--primary-color);
+        }
+
+        .message.ai .message-avatar {
+            background: var(--success-color);
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .task-info {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .task-info-item {
+            margin: 4px 0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--success-color);
+            color: white;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .file-links {
+            margin-top: 12px;
+        }
+
+        .file-links-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .file-link-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+        }
+
+        .file-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .file-link:hover {
+            text-decoration: underline;
+        }
+
+        .file-link-button {
+            padding: 6px 12px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-link-button:hover {
+            background: var(--primary-hover);
+        }
+
+        /* 输入区域 */
+        .input-area {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-primary);
+        }
+
+        .input-container {
+            position: relative;
+        }
+
+        .deep-research-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .deep-research-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .apple-toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+        }
+
+        .apple-toggle-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .apple-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .apple-toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .apple-toggle-input:checked + .apple-toggle-slider {
+            background-color: var(--primary-color);
+        }
+
+        .apple-toggle-input:checked + .apple-toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 120px 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .input-actions {
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .attach-btn, .send-button {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .attach-btn {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+
+        .attach-btn:hover {
+            background: var(--bg-hover);
+        }
+
+        .send-button {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .send-button:hover {
+            background: var(--primary-hover);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .model-selector {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        /* ========== 右侧文档预览 ========== */
+        .preview-sidebar {
+            width: 0;
+            background: var(--bg-primary);
+            border-left: 1px solid var(--border-color);
+            overflow: hidden;
+            transition: width 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-sidebar.open {
+            width: 600px;
+        }
+
+        .preview-sidebar-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .preview-sidebar-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .preview-sidebar-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px 8px;
+            line-height: 1;
+        }
+
+        .preview-sidebar-close:hover {
+            color: var(--text-primary);
+        }
+
+        .preview-toolbar {
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+        }
+
+        .toolbar-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .preview-btn {
+            padding: 6px 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .preview-btn:hover {
+            background: var(--bg-hover);
+            transform: translateY(-1px);
+        }
+
+        .preview-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+        }
+
+        .preview-content h2 {
+            font-size: 24px;
+            margin: 24px 0 16px;
+            color: var(--text-primary);
+        }
+
+        .preview-content h3 {
+            font-size: 18px;
+            margin: 20px 0 12px;
+            color: var(--text-primary);
+        }
+
+        .preview-content p {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-primary);
+            margin: 12px 0;
+        }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-tertiary);
+        }
+
+        /* ========== 文件处理选择模态框 ========== */
+        .file-processing-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .file-processing-modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #92400e;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .selected-file-info {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .selected-file-name {
+            font-size: 14px;
+            color: #78350f;
+            word-break: break-all;
+        }
+
+        .selected-file-size {
+            font-size: 12px;
+            color: #92400e;
+            margin-top: 4px;
+        }
+
+        .modal-subtitle {
+            font-size: 16px;
+            color: #92400e;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .processing-options {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .processing-option {
+            flex: 1;
+            padding: 20px;
+            background: white;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .processing-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+        }
+
+        .processing-option.pdf-parse {
+            border-color: #8b5cf6;
+        }
+
+        .processing-option.pdf-parse:hover {
+            background: #f5f3ff;
+        }
+
+        .processing-option.template-extract {
+            border-color: #10b981;
+        }
+
+        .processing-option.template-extract:hover {
+            background: #ecfdf5;
+        }
+
+        .option-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .option-desc {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .modal-close-btn {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.1);
+            border: none;
+            border-radius: 8px;
+            color: #78350f;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        /* ========== 文件上传进度显示 ========== */
+        .upload-progress-message {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+
+        .progress-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .progress-icon {
+            font-size: 20px;
+            animation: rotate 1s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-file-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .progress-bar-container {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            transition: width 0.3s ease;
+            border-radius: 8px;
+        }
+
+        .progress-status {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .upload-complete-message {
+            background: #ecfdf5;
+            border: 1px solid #10b981;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+
+        .complete-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .complete-icon {
+            font-size: 20px;
+        }
+
+        .complete-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: #059669;
+        }
+
+        .complete-file-name {
+            font-size: 13px;
+            color: #047857;
+            margin-top: 4px;
+        }
+
+        /* ========== 思考过程样式 ========== */
+        .thinking-container {
+            background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+            border: 1px solid #e9d5ff;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .thinking-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .thinking-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #7c3aed;
+            font-weight: 500;
+        }
+
+        .thinking-icon {
+            font-size: 16px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .thinking-toggle {
+            font-size: 12px;
+            color: #a78bfa;
+            transition: transform 0.2s;
+        }
+
+        .thinking-container.collapsed .thinking-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .thinking-content {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #6b21a8;
+            line-height: 1.6;
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+        }
+
+        .thinking-container.collapsed .thinking-content {
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0;
+        }
+
+        .thinking-step {
+            margin: 12px 0;
+            padding: 8px 0;
+            border-top: 1px dashed #e9d5ff;
+        }
+
+        .thinking-step:first-child {
+            border-top: none;
+        }
+
+        /* 打字光标效果 */
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: var(--primary-color);
+            margin-left: 2px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* AI响应样式优化 */
+        .ai-response-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧边栏 -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">buildsense</div>
+                <button class="settings-btn" onclick="alert('设置功能')">⚙️</button>
+                <div class="chat-actions">
+                    <button class="new-chat-btn back-btn" onclick="alert('返回项目选择')">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span>返回</span>
+                    </button>
+                    <button class="new-chat-btn" onclick="startNewChat()">
+                        <span>新建对话</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-tabs">
+                <button class="sidebar-tab active" onclick="switchTab('files')">
+                    📁 文件
+                </button>
+                <button class="sidebar-tab" onclick="switchTab('history')">
+                    🕐 对话记录
+                </button>
+            </div>
+
+            <div class="tab-content active" id="filesTab">
+                <div class="files-section" id="filesSection">
+                    <div class="files-section-header" onclick="toggleFilesSection()">
+                        <div class="files-section-title">
+                            <span class="caret">▼</span>
+                            <span>项目文件</span>
+                        </div>
+                        <span class="files-count">5</span>
+                    </div>
+                    <div class="files-section-content">
+                        <div class="file-item active">
+                            <span class="file-icon">📕</span>
+                            <span>双图驱动的联想式记忆增量更新算法研究开题构想.pdf</span>
+                        </div>
+                        <div class="file-item">
+                            <span class="file-icon">📝</span>
+                            <span>相关文献综述_20241115.md</span>
+                        </div>
+                        <div class="file-item">
+                            <span class="file-icon">📝</span>
+                            <span>图结构设计方案_20241118.md</span>
+                        </div>
+                        <div class="file-item">
+                            <span class="file-icon">📊</span>
+                            <span>实验数据分析_20241120.xlsx</span>
+                        </div>
+                        <div class="file-item">
+                            <span class="file-icon">📝</span>
+                            <span>算法优化记录_20241122.md</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="historyTab">
+                <div class="history-list">
+                    <div class="history-item" onclick="loadHistoryChat('图结构设计讨论')">
+                        <div class="history-title">图结构设计讨论</div>
+                        <div class="history-time">2小时前</div>
+                    </div>
+                    <div class="history-item" onclick="loadHistoryChat('文献综述整理')">
+                        <div class="history-title">文献综述整理</div>
+                        <div class="history-time">昨天</div>
+                    </div>
+                    <div class="history-item" onclick="loadHistoryChat('实验方案设计')">
+                        <div class="history-title">实验方案设计</div>
+                        <div class="history-time">3天前</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 中间聊天区 -->
+        <div class="main-content">
+            <div class="chat-header">
+                <div></div>
+                <div class="chat-title-section">
+                    <div class="chat-title">AI 对话助手</div>
+                    <div class="project-info">
+                        <span>🧠</span>
+                        <span>图驱动记忆管理研究</span>
+                    </div>
+                </div>
+                <div></div>
+            </div>
+
+            <div class="chat-container" id="chatContainer">
+                <div class="welcome-prompts" id="welcomePrompts">
+                    <div class="welcome-title">🧠 图驱动记忆管理研究助手</div>
+                    <div class="welcome-subtitle">点击左侧"新建对话"开始研究讨论，或点击文件查看文档</div>
+                </div>
+
+                <div class="chat-messages" id="chatMessages" style="display: none;">
+                    <!-- 对话消息将在这里动态显示 -->
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-container">
+                    <div class="deep-research-container">
+                        <label class="deep-research-label">
+                            <span class="deep-research-text">Deep Research</span>
+                            <div class="apple-toggle">
+                                <input type="checkbox" id="deepResearchToggle" class="apple-toggle-input">
+                                <span class="apple-toggle-slider"></span>
+                            </div>
+                        </label>
+                        <span style="font-size: 12px; color: var(--text-tertiary);">考虑吗？找我就对了！</span>
+                    </div>
+                    
+                    <textarea class="input-field" id="inputField" 
+                              placeholder="帮我生成这个智能长档案与AI工具的"商业计划书"吧。包括why, how, what, when等" 
+                              rows="1"></textarea>
+                    
+                    <div class="input-actions">
+                        <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt" style="display: none;">
+                        <button class="attach-btn" id="attachBtn" title="上传文件" onclick="document.getElementById('fileInput').click()">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M8 1V15M1 8H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                        <select class="model-selector" id="modelSelector">
+                            <option value="deepseek">DeepSeek</option>
+                            <option value="qwen">Qwen</option>
+                        </select>
+                        <button class="send-button" id="sendButton">
+                            <span>▶</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧文档预览 -->
+        <div class="preview-sidebar" id="previewSidebar">
+            <div class="preview-sidebar-header">
+                <h2 class="preview-sidebar-title">
+                    <span>📄</span>
+                    <span id="previewDocTitle">文档预览</span>
+                </h2>
+                <button class="preview-sidebar-close" onclick="closePreview()">×</button>
+            </div>
+
+            <div class="preview-toolbar">
+                <div class="toolbar-actions">
+                    <button class="preview-btn" title="下载原文件">
+                        💾 源文件
+                    </button>
+                    <button class="preview-btn" title="下载当前版本">
+                        💾 修改版
+                    </button>
+                    <button class="preview-btn" title="版本历史">
+                        🕐 历史
+                    </button>
+                    <button class="preview-btn" title="刷新">
+                        🔄 刷新
+                    </button>
+                    <button class="preview-btn" title="编辑">
+                        ✏️ 编辑
+                    </button>
+                </div>
+            </div>
+
+            <div class="preview-content" id="previewContent">
+                <h2>双图驱动的联想式记忆增量更新算法研究开题构想</h2>
+                
+                <h3>一、研究背景与意义</h3>
+                <p>在人工智能领域，记忆管理一直是构建智能系统的核心挑战之一。传统的记忆存储方式存在效率低下、检索困难等问题，难以满足复杂场景下的实时响应需求。</p>
+                
+                <p>本研究提出一种基于双图结构的联想式记忆管理方案，通过**知识图谱**和**关联图谱**的协同工作，实现高效的记忆存储、检索和更新机制。这种方法能够模拟人类大脑的联想记忆过程，在保持记忆完整性的同时，大幅提升系统的响应速度。</p>
+                
+                <h3>二、核心创新点</h3>
+                <p><strong>1. 双图驱动架构</strong></p>
+                <p>• <strong>知识图谱</strong>：存储结构化的事实性知识，节点表示实体，边表示关系</p>
+                <p>• <strong>关联图谱</strong>：记录知识间的语义关联和使用频率，支持联想式检索</p>
+                
+                <p><strong>2. 增量更新机制</strong></p>
+                <p>• 采用时间戳和版本控制，支持知识的渐进式更新</p>
+                <p>• 通过差分算法，只更新变化的部分，降低计算开销</p>
+                <p>• 自动维护图结构的一致性，避免冗余和冲突</p>
+                
+                <p><strong>3. 联想式检索算法</strong></p>
+                <p>• 结合PageRank和语义相似度，计算节点的激活强度</p>
+                <p>• 支持多跳推理，从初始查询扩散到相关知识</p>
+                <p>• 动态调整检索深度，平衡准确性和效率</p>
+
+                <h3>三、预期技术路线</h3>
+                <p><strong>阶段一：图结构设计</strong>（1-2个月）</p>
+                <p>• 定义节点和边的属性schema</p>
+                <p>• 设计图的存储格式和索引机制</p>
+                
+                <p><strong>阶段二：算法实现</strong>（2-3个月）</p>
+                <p>• 实现基础的CRUD操作</p>
+                <p>• 开发增量更新算法</p>
+                <p>• 构建联想检索引擎</p>
+                
+                <p><strong>阶段三：实验验证</strong>（2个月）</p>
+                <p>• 在标准数据集上测试性能</p>
+                <p>• 对比现有方法的优劣</p>
+                <p>• 优化算法参数</p>
+
+                <h3>四、预期成果</h3>
+                <p>1. 一套完整的双图驱动记忆管理系统原型</p>
+                <p>2. 相关算法的理论分析和实验验证报告</p>
+                <p>3. 在检索速度和准确率上达到业界领先水平</p>
+                <p>4. 发表1-2篇高水平学术论文</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件处理选择模态框 -->
+    <div class="file-processing-modal" id="fileProcessingModal">
+        <div class="modal-content">
+            <div class="modal-title">文件处理选择</div>
+            
+            <div class="selected-file-info">
+                <div class="selected-file-name" id="selectedFileName">文件名.pdf</div>
+                <div class="selected-file-size" id="selectedFileSize">(0.87MB)</div>
+            </div>
+            
+            <div class="modal-subtitle">请选择处理方式：</div>
+            
+            <div class="processing-options">
+                <div class="processing-option pdf-parse" onclick="selectProcessingOption('parse')">
+                    <div class="option-label">A. PDF解析功能</div>
+                    <div class="option-desc">保存到知识库</div>
+                </div>
+                
+                <div class="processing-option template-extract" onclick="selectProcessingOption('template')">
+                    <div class="option-label">B. 模板抽取功能</div>
+                    <div class="option-desc">提取文档模板</div>
+                </div>
+            </div>
+            
+            <button class="modal-close-btn" onclick="closeProcessingModal()">取消</button>
+        </div>
+    </div>
+
+    <script>
+        // 标签切换
+        function switchTab(tabName) {
+            const tabs = document.querySelectorAll('.sidebar-tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+            
+            if (tabName === 'files') {
+                tabs[0].classList.add('active');
+                document.getElementById('filesTab').classList.add('active');
+            } else if (tabName === 'history') {
+                tabs[1].classList.add('active');
+                document.getElementById('historyTab').classList.add('active');
+            }
+        }
+
+        // 折叠/展开文件列表
+        function toggleFilesSection() {
+            const section = document.getElementById('filesSection');
+            section.classList.toggle('collapsed');
+        }
+
+        // 文件点击 - 打开预览面板
+        document.querySelectorAll('.file-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 获取文件名
+                const fileName = this.querySelector('span:last-child').textContent;
+                
+                // 打开右侧预览面板
+                openFilePreview(fileName);
+            });
+        });
+
+        // 新建对话
+        function startNewChat() {
+            document.getElementById('welcomePrompts').style.display = 'none';
+            document.getElementById('chatMessages').style.display = 'flex';
+        }
+
+        // 打开文件预览
+        function openFilePreview(fileName) {
+            const previewSidebar = document.getElementById('previewSidebar');
+            const previewDocTitle = document.getElementById('previewDocTitle');
+            
+            // 设置文件名
+            previewDocTitle.textContent = fileName;
+            
+            // 打开预览面板
+            previewSidebar.classList.add('open');
+        }
+
+        // 打开预览（保留兼容性）
+        function openPreview() {
+            document.getElementById('previewSidebar').classList.add('open');
+        }
+
+        // 关闭预览
+        function closePreview() {
+            document.getElementById('previewSidebar').classList.remove('open');
+        }
+
+        // 输入框自动高度
+        const inputField = document.getElementById('inputField');
+        inputField.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // 发送消息
+        const sendButton = document.getElementById('sendButton');
+        inputField.addEventListener('input', function() {
+            sendButton.disabled = this.value.trim() === '';
+        });
+
+        sendButton.addEventListener('click', function() {
+            const message = inputField.value.trim();
+            if (message) {
+                // 显示用户消息
+                addUserMessage(message);
+                
+                // 清空输入框
+                inputField.value = '';
+                inputField.style.height = 'auto';
+                sendButton.disabled = true;
+                
+                // 随机选择一个AI响应
+                setTimeout(() => {
+                    generateAIResponse(message);
+                }, 500);
+            }
+        });
+
+        // 回车发送
+        inputField.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendButton.click();
+            }
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            sendButton.disabled = true;
+        });
+
+        // ========== 文件上传处理 ==========
+        let selectedFile = null;
+
+        // 监听文件选择
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                selectedFile = file;
+                showProcessingModal(file);
+            }
+        });
+
+        // 显示处理方式选择模态框
+        function showProcessingModal(file) {
+            const modal = document.getElementById('fileProcessingModal');
+            const fileName = document.getElementById('selectedFileName');
+            const fileSize = document.getElementById('selectedFileSize');
+            
+            fileName.textContent = file.name;
+            fileSize.textContent = `(${(file.size / 1024 / 1024).toFixed(2)}MB)`;
+            
+            modal.classList.add('show');
+        }
+
+        // 关闭模态框
+        function closeProcessingModal() {
+            const modal = document.getElementById('fileProcessingModal');
+            modal.classList.remove('show');
+            // 重置文件输入
+            document.getElementById('fileInput').value = '';
+            selectedFile = null;
+        }
+
+        // 选择处理方式
+        function selectProcessingOption(option) {
+            // 先保存文件引用，再关闭模态框
+            const fileToProcess = selectedFile;
+            closeProcessingModal();
+            
+            // 确保显示聊天消息区域
+            document.getElementById('welcomePrompts').style.display = 'none';
+            document.getElementById('chatMessages').style.display = 'flex';
+            
+            if (option === 'parse') {
+                startPdfParsing(fileToProcess);
+            } else if (option === 'template') {
+                startTemplateExtraction(fileToProcess);
+            }
+        }
+
+        // 开始PDF解析（保存到知识库）
+        function startPdfParsing(file) {
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // 创建进度消息容器
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+            messageDiv.innerHTML = `
+                <div class="message-avatar">AI</div>
+                <div class="message-content">
+                    <div class="upload-progress-message" id="uploadProgress-${Date.now()}">
+                        <div class="progress-header">
+                            <div class="progress-icon">⚙️</div>
+                            <div class="progress-file-name">${file.name}</div>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="progressBar" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-status" id="progressStatus">准备上传...</div>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            
+            // 滚动到底部
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // 模拟处理过程
+            simulateProcessing(messageDiv, file.name);
+        }
+
+        // 模拟处理过程
+        function simulateProcessing(messageDiv, fileName) {
+            const progressBar = messageDiv.querySelector('#progressBar');
+            const progressStatus = messageDiv.querySelector('#progressStatus');
+            const progressIcon = messageDiv.querySelector('.progress-icon');
+            
+            const stages = [
+                { progress: 20, status: '正在上传文件...', icon: '📤', duration: 1000 },
+                { progress: 40, status: '文件上传完成，开始解析...', icon: '🔄', duration: 800 },
+                { progress: 60, status: '正在智能拆解文档结构...', icon: '🧩', duration: 1500 },
+                { progress: 80, status: '正在提取关键信息...', icon: '🔍', duration: 1200 },
+                { progress: 100, status: '正在保存到知识库...', icon: '💾', duration: 1000 }
+            ];
+            
+            let currentStage = 0;
+            
+            function updateProgress() {
+                if (currentStage < stages.length) {
+                    const stage = stages[currentStage];
+                    progressBar.style.width = stage.progress + '%';
+                    progressStatus.textContent = stage.status;
+                    progressIcon.textContent = stage.icon;
+                    
+                    currentStage++;
+                    setTimeout(updateProgress, stage.duration);
+                } else {
+                    // 处理完成，替换为完成消息
+                    setTimeout(() => {
+                        const uploadProgressDiv = messageDiv.querySelector('.upload-progress-message');
+                        uploadProgressDiv.outerHTML = `
+                            <div class="upload-complete-message">
+                                <div class="complete-header">
+                                    <div class="complete-icon">✅</div>
+                                    <div class="complete-text">文件处理完成！</div>
+                                </div>
+                                <div class="complete-file-name">${fileName} 已成功保存到知识库</div>
+                            </div>
+                        `;
+                    }, 500);
+                }
+            }
+            
+            updateProgress();
+        }
+
+        // 开始模板抽取
+        function startTemplateExtraction(file) {
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // 创建进度消息容器
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+            messageDiv.innerHTML = `
+                <div class="message-avatar">AI</div>
+                <div class="message-content">
+                    <div class="upload-progress-message" id="uploadProgress-${Date.now()}">
+                        <div class="progress-header">
+                            <div class="progress-icon">⚙️</div>
+                            <div class="progress-file-name">${file.name}</div>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="progressBar" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-status" id="progressStatus">准备处理...</div>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            
+            // 滚动到底部
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // 模拟模板抽取过程
+            simulateTemplateExtraction(messageDiv, file.name);
+        }
+
+        // 模拟模板抽取过程
+        function simulateTemplateExtraction(messageDiv, fileName) {
+            const progressBar = messageDiv.querySelector('#progressBar');
+            const progressStatus = messageDiv.querySelector('#progressStatus');
+            const progressIcon = messageDiv.querySelector('.progress-icon');
+            
+            const stages = [
+                { progress: 25, status: '正在上传文件...', icon: '📤', duration: 1000 },
+                { progress: 50, status: '正在分析文档结构...', icon: '🔍', duration: 1200 },
+                { progress: 75, status: '正在提取模板元素...', icon: '📋', duration: 1500 },
+                { progress: 100, status: '正在生成模板数据...', icon: '✨', duration: 1000 }
+            ];
+            
+            let currentStage = 0;
+            
+            function updateProgress() {
+                if (currentStage < stages.length) {
+                    const stage = stages[currentStage];
+                    progressBar.style.width = stage.progress + '%';
+                    progressStatus.textContent = stage.status;
+                    progressIcon.textContent = stage.icon;
+                    
+                    currentStage++;
+                    setTimeout(updateProgress, stage.duration);
+                } else {
+                    // 处理完成
+                    setTimeout(() => {
+                        const uploadProgressDiv = messageDiv.querySelector('.upload-progress-message');
+                        uploadProgressDiv.outerHTML = `
+                            <div class="upload-complete-message">
+                                <div class="complete-header">
+                                    <div class="complete-icon">✅</div>
+                                    <div class="complete-text">模板抽取完成！</div>
+                                </div>
+                                <div class="complete-file-name">${fileName} 的模板已成功生成</div>
+                            </div>
+                        `;
+                    }, 500);
+                }
+            }
+            
+            updateProgress();
+        }
+
+        // 点击模态框背景关闭
+        document.getElementById('fileProcessingModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeProcessingModal();
+            }
+        });
+
+        // ========== AI 对话系统 ==========
+        
+        // 添加用户消息
+        function addUserMessage(text) {
+            // 确保显示聊天消息区域
+            document.getElementById('welcomePrompts').style.display = 'none';
+            document.getElementById('chatMessages').style.display = 'flex';
+            
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user';
+            messageDiv.innerHTML = `
+                <div class="message-avatar">U</div>
+                <div class="message-content">
+                    <div class="message-text">${escapeHtml(text)}</div>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // 生成AI响应（随机选择3个模板之一）
+        function generateAIResponse(userMessage) {
+            const responses = [
+                generateDocumentResponse,
+                generateResearchResponse,
+                generateAnalysisResponse
+            ];
+            
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+            randomResponse(userMessage);
+        }
+
+        // 响应1: 文档生成任务（简单思考）
+        function generateDocumentResponse(userMessage) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+            messageDiv.innerHTML = `
+                <div class="message-avatar">AI</div>
+                <div class="message-content">
+                    <div class="thinking-container" id="thinking-${Date.now()}">
+                        <div class="thinking-header" onclick="toggleThinking(this)">
+                            <div class="thinking-title">
+                                <span class="thinking-icon">🤔</span>
+                                <span>思考中...</span>
+                            </div>
+                            <span class="thinking-toggle">▼</span>
+                        </div>
+                        <div class="thinking-content">
+                            <div id="think-content"></div>
+                        </div>
+                    </div>
+                    <div class="ai-response-text" id="ai-response-${Date.now()}"></div>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+
+            const thinkContent = messageDiv.querySelector('#think-content');
+            const responseText = messageDiv.querySelector('[id^="ai-response-"]');
+            const thinkingContainer = messageDiv.querySelector('.thinking-container');
+
+            // 思考过程 - 自然流
+            const thinking = `收到用户请求："${userMessage}"\n\n这是一个文档生成任务...需要确定文档类型和结构\n\n让我分析一下：\n- 这应该是一份技术性文档\n- 需要包含背景、核心内容、实施方案\n- 结构应该清晰，分为几个主要部分\n\n好的，我知道该怎么做了，开始组织内容框架`;
+            
+            typeText(thinkContent, thinking, 15, () => {
+                // 思考完成，立即更新标题
+                const thinkingTitle = thinkingContainer.querySelector('.thinking-title span:last-child');
+                thinkingTitle.textContent = '思考过程';
+                
+                // 然后开始生成响应
+                setTimeout(() => {
+                    const response = `好的！我将为您生成关于"${userMessage}"的详细文档。\n\n基于您的需求，我将从以下几个方面展开：\n\n1. **背景介绍**：阐述相关背景和重要性\n2. **核心内容**：详细分析关键要点\n3. **实施方案**：提供可行的解决方案\n4. **总结建议**：归纳要点并给出建议\n\n文档正在生成中，预计3-5分钟完成。您可以继续进行其他操作，完成后我会通知您。`;
+                    
+                    typeText(responseText, response, 20, () => {
+                        // 响应完成，折叠思考过程
+                        setTimeout(() => {
+                            thinkingContainer.classList.add('collapsed');
+                        }, 500);
+                    });
+                }, 300);
+            });
+        }
+
+        // 响应2: 复杂研究任务（3轮思考，模拟ReAct）
+        function generateResearchResponse(userMessage) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+            messageDiv.innerHTML = `
+                <div class="message-avatar">AI</div>
+                <div class="message-content">
+                    <div class="thinking-container" id="thinking-${Date.now()}">
+                        <div class="thinking-header" onclick="toggleThinking(this)">
+                            <div class="thinking-title">
+                                <span class="thinking-icon">🤔</span>
+                                <span>思考中...</span>
+                            </div>
+                            <span class="thinking-toggle">▼</span>
+                        </div>
+                        <div class="thinking-content">
+                            <div class="thinking-step">
+                                <div id="think-step-1"></div>
+                            </div>
+                            <div class="thinking-step">
+                                <div id="think-step-2"></div>
+                            </div>
+                            <div class="thinking-step">
+                                <div id="think-step-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-response-text" id="ai-response-${Date.now()}"></div>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+
+            const thinkStep1 = messageDiv.querySelector('#think-step-1');
+            const thinkStep2 = messageDiv.querySelector('#think-step-2');
+            const thinkStep3 = messageDiv.querySelector('#think-step-3');
+            const responseText = messageDiv.querySelector('[id^="ai-response-"]');
+            const thinkingContainer = messageDiv.querySelector('.thinking-container');
+
+            // 思考阶段1
+            const thinking1 = `用户输入："${userMessage}"\n\n嗯...这看起来是一个需要深度研究的问题\n\n我需要先理解清楚：\n- 这个任务的核心目标是什么？\n- 需要查阅哪些资料？\n- 涉及哪些关键维度？\n\n看起来需要系统性的分析方法`;
+            
+            typeText(thinkStep1, thinking1, 15, () => {
+                setTimeout(() => {
+                    // 思考阶段2
+                    const thinking2 = `好，现在我要制定具体的执行策略...\n\n让我想想最佳的研究路径：\n\n首先，收集相关的文献和资料\n然后，进行横向和纵向的对比分析\n接着，提炼出核心观点和论据\n最后，构建一个清晰的论证框架\n\n这样应该能够全面覆盖这个主题`;
+                    
+                    typeText(thinkStep2, thinking2, 15, () => {
+                        setTimeout(() => {
+                            // 思考阶段3
+                            const thinking3 = `等等，让我再检查一下这个方案...\n\n逻辑是否完整？看起来没问题 ✓\n可行性如何？应该是可以做到的\n输出格式？最好是结构化的报告形式\n\n好的，我现在清楚该怎么处理了`;
+                            
+                            typeText(thinkStep3, thinking3, 15, () => {
+                                // 思考完成，立即更新标题
+                                const thinkingTitle = thinkingContainer.querySelector('.thinking-title span:last-child');
+                                thinkingTitle.textContent = '思考过程';
+                                
+                                setTimeout(() => {
+                                    // 生成响应
+                                    const response = `经过深度分析，我已经为"${userMessage}"制定了完整的研究方案。\n\n**研究框架：**\n\n📊 **数据收集阶段**\n- 已检索知识库中相关文档 15 份\n- 提取关键信息点 23 个\n\n🔬 **分析阶段**\n- 多维度对比分析\n- 识别核心矛盾与机会\n\n📝 **输出阶段**\n- 生成结构化研究报告\n- 提供可执行建议\n\n您希望我立即开始生成详细报告，还是先为您展示研究大纲？`;
+                                    
+                                    typeText(responseText, response, 20, () => {
+                                        // 响应完成，折叠思考过程
+                                        setTimeout(() => {
+                                            thinkingContainer.classList.add('collapsed');
+                                        }, 500);
+                                    });
+                                }, 300);
+                            });
+                        }, 400);
+                    });
+                }, 400);
+            });
+        }
+
+        // 响应3: 分析类任务（2轮思考）
+        function generateAnalysisResponse(userMessage) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+            messageDiv.innerHTML = `
+                <div class="message-avatar">AI</div>
+                <div class="message-content">
+                    <div class="thinking-container" id="thinking-${Date.now()}">
+                        <div class="thinking-header" onclick="toggleThinking(this)">
+                            <div class="thinking-title">
+                                <span class="thinking-icon">🤔</span>
+                                <span>思考中...</span>
+                            </div>
+                            <span class="thinking-toggle">▼</span>
+                        </div>
+                        <div class="thinking-content">
+                            <div class="thinking-step">
+                                <div id="think-step-1"></div>
+                            </div>
+                            <div class="thinking-step">
+                                <div id="think-step-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-response-text" id="ai-response-${Date.now()}"></div>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+
+            const thinkStep1 = messageDiv.querySelector('#think-step-1');
+            const thinkStep2 = messageDiv.querySelector('#think-step-2');
+            const responseText = messageDiv.querySelector('[id^="ai-response-"]');
+            const thinkingContainer = messageDiv.querySelector('.thinking-container');
+
+            // 思考阶段1
+            const thinking1 = `看到问题："${userMessage}"\n\n这需要分析和洞察...让我想想\n\n我觉得核心是要做数据分析，难度应该是中等的\n\n可以把这个任务拆分成几个步骤：\n- 先整理现有的数据\n- 然后分析其中的趋势\n- 最后得出结论和建议`;
+            
+            typeText(thinkStep1, thinking1, 15, () => {
+                setTimeout(() => {
+                    // 思考阶段2
+                    const thinking2 = `现在来设计解决方案...\n\n我可以采用MECE框架来确保分析的全面性\n用可视化的方式会更直观\n最好能给出3-5条可执行的建议\n\n估计大概2分钟就能完成这个分析`;
+                    
+                    typeText(thinkStep2, thinking2, 15, () => {
+                        // 思考完成，立即更新标题
+                        const thinkingTitle = thinkingContainer.querySelector('.thinking-title span:last-child');
+                        thinkingTitle.textContent = '思考过程';
+                        
+                        setTimeout(() => {
+                            // 生成响应
+                            const response = `我来帮您分析"${userMessage}"这个问题。\n\n**快速洞察：**\n\n✨ **核心发现**\n根据当前数据和趋势，我识别出3个关键点：\n\n1. **机会点**：存在明显的优化空间\n2. **风险点**：需要注意潜在的挑战\n3. **建议**：可以从这几个方向入手改进\n\n**详细分析**\n\n我可以为您生成一份完整的分析报告，包含：\n- 📈 数据可视化图表\n- 📊 详细的趋势分析\n- 💡 可执行的改进建议\n\n需要我现在开始生成吗？`;
+                            
+                            typeText(responseText, response, 20, () => {
+                                // 响应完成，折叠思考过程
+                                setTimeout(() => {
+                                    thinkingContainer.classList.add('collapsed');
+                                }, 500);
+                            });
+                        }, 300);
+                    });
+                }, 400);
+            });
+        }
+
+        // 流式打字效果
+        function typeText(element, text, speed, callback) {
+            let index = 0;
+            const cursor = document.createElement('span');
+            cursor.className = 'typing-cursor';
+            element.appendChild(cursor);
+            
+            function type() {
+                if (index < text.length) {
+                    const char = text.charAt(index);
+                    const textNode = document.createTextNode(char);
+                    element.insertBefore(textNode, cursor);
+                    index++;
+                    scrollToBottom();
+                    setTimeout(type, speed);
+                } else {
+                    cursor.remove();
+                    if (callback) callback();
+                }
+            }
+            
+            type();
+        }
+
+        // 切换思考过程显示/隐藏
+        function toggleThinking(headerElement) {
+            const container = headerElement.closest('.thinking-container');
+            container.classList.toggle('collapsed');
+        }
+
+        // 滚动到底部
+        function scrollToBottom() {
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // HTML转义
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 加载历史对话
+        function loadHistoryChat(title) {
+            // 清空当前对话
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '<!-- 对话消息将在这里动态显示 -->';
+            
+            // 显示对话区域
+            document.getElementById('welcomePrompts').style.display = 'none';
+            document.getElementById('chatMessages').style.display = 'flex';
+            
+            // Demo提示
+            alert(`Demo模式：加载历史对话 "${title}"\n\n实际使用时会从服务器加载历史记录`);
+        }
+    </script>
+</body>
+</html>
+
