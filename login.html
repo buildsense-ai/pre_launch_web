@@ -234,7 +234,7 @@
     </style>
 </head>
 <body>
-    <a href="index_tech.html" class="back-link">← 返回首页</a>
+    <a href="/prelaunch/" class="back-link">← 返回首页</a>
 
     <!-- 登录表单容器 -->
     <div class="login-container" id="loginContainer">
@@ -278,7 +278,7 @@
         </div>
 
         <div style="margin-top: 20px; text-align: center;">
-            <a href="index_tech.html" style="color: #00d4ff;">返回首页</a>
+            <a href="/prelaunch/" style="color: #00d4ff;">返回首页</a>
         </div>
     </div>
 
@@ -355,7 +355,7 @@
             showToast('正在进入应用...', 'info');
 
             // 直接跳转到应用页面，token已经存储在localStorage中
-            window.location.href = 'http://43.139.19.144:3003/';
+            window.location.href = '/';
         }
 
         // 显示/隐藏错误信息
@@ -457,10 +457,10 @@
                             localStorage.setItem('user_status', result.status);
 
                             // 跳转到应用主页
-                            window.location.href = 'http://43.139.19.144:3003/';
+                            window.location.href = '/';
                         } else {
                             // 未激活用户跳转回预发布页面
-                            window.location.href = 'index_tech.html';
+                            window.location.href = '/prelaunch/';
                         }
                     }, 1000);
                 } else {
