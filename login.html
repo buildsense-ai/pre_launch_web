@@ -121,23 +121,6 @@
             color: #00b8e6;
         }
 
-        .register-link {
-            text-align: center;
-            padding-top: 20px;
-            border-top: 1px solid rgba(0, 212, 255, 0.1);
-        }
-
-        .register-link a {
-            color: #00d4ff;
-            text-decoration: none;
-            font-size: 14px;
-            transition: color 0.3s;
-        }
-
-        .register-link a:hover {
-            color: #00b8e6;
-        }
-
         .back-link {
             position: absolute;
             top: 20px;
@@ -150,6 +133,39 @@
 
         .back-link:hover {
             color: #00b8e6;
+        }
+
+        /* Loading animation */
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: #ff5050;
+            font-size: 13px;
+            margin-top: 4px;
+            font-weight: 500;
+            display: none;
         }
 
         /* Toast notifications */
@@ -192,6 +208,7 @@
             padding: 0 4px;
         }
 
+        /* User info styles */
         .user-info {
             margin-bottom: 24px;
         }
@@ -228,21 +245,18 @@
             <div class="form-group">
                 <label class="form-label">用户名</label>
                 <input type="text" class="form-input" id="loginUsername" placeholder="请输入用户名" required>
+                <div class="error-message" id="loginUsernameError"></div>
             </div>
             <div class="form-group">
                 <label class="form-label">密码</label>
                 <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码" required>
+                <div class="error-message" id="loginPasswordError"></div>
             </div>
             <button type="submit" class="login-btn">登录</button>
         </form>
 
         <div class="forgot-password">
             <a href="forgot-password.html">忘记密码？</a>
-        </div>
-
-        <div class="register-link">
-            <span style="color: #666; font-size: 14px;">还没有账户？</span>
-            <a href="index_tech.html#register">立即注册</a>
         </div>
     </div>
 
@@ -263,7 +277,7 @@
             <button onclick="logout()" class="login-btn" style="background: #666; margin-top: 12px;">退出登录</button>
         </div>
 
-        <div class="register-link" style="margin-top: 20px;">
+        <div style="margin-top: 20px; text-align: center;">
             <a href="index_tech.html" style="color: #00d4ff;">返回首页</a>
         </div>
     </div>
@@ -339,8 +353,26 @@
         // 进入应用
         function enterApp() {
             showToast('正在进入应用...', 'info');
-            // TODO: 跳转到应用页面
-            // window.location.href = '/app';
+
+            // 直接跳转到应用页面，token已经存储在localStorage中
+            window.location.href = 'http://43.139.19.144:3003/';
+        }
+
+        // 显示/隐藏错误信息
+        function showError(elementId, message) {
+            const errorEl = document.getElementById(elementId);
+            if (errorEl) {
+                errorEl.textContent = message;
+                errorEl.style.display = message ? 'block' : 'none';
+            }
+        }
+
+        function clearAllErrors() {
+            const errorElements = document.querySelectorAll('.error-message');
+            errorElements.forEach(el => {
+                el.textContent = '';
+                el.style.display = 'none';
+            });
         }
 
         // Toast notification system
@@ -371,16 +403,25 @@
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
+            // 清除所有错误信息
+            clearAllErrors();
+
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
 
-            if (!username || !password) {
-                showToast('请填写完整的登录信息', 'error');
+            if (!username) {
+                showError('loginUsernameError', '请输入用户名');
+                return;
+            }
+
+            if (!password) {
+                showError('loginPasswordError', '请输入密码');
                 return;
             }
 
             const submitBtn = this.querySelector('.login-btn');
             submitBtn.disabled = true;
+            submitBtn.classList.add('btn-loading');
             submitBtn.textContent = '登录中...';
 
             try {
@@ -391,7 +432,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        username: email,  // 使用邮箱作为用户名
+                        username: username,
                         password: password
                     })
                 });
@@ -404,19 +445,28 @@
                     localStorage.setItem('token_type', result.token_type || 'bearer');
                     localStorage.setItem('user_status', result.status);
 
-                    if (result.status === 'active') {
-                        showToast('登录成功！正在跳转到应用...', 'success');
-                        // TODO: 跳转到应用页面
-                        // window.location.href = '/app';
-                    } else {
-                        showToast('登录成功！您的账户尚未激活，请等待管理员审核。', 'info');
-                        // 可以跳转到个人中心或显示等待页面
-                        // window.location.href = '/dashboard';
-                    }
+                    showToast('登录成功！', 'success');
+
+                    // 根据用户状态跳转
+                    setTimeout(() => {
+                        if (result.status === 'active') {
+                            // 激活用户跳转到应用主页
+                            // 现在同域，可以直接跳转，token已经存储在localStorage中
+                            const token = result.access_token;
+                            localStorage.setItem('token', token); // 存储为应用期望的格式
+                            localStorage.setItem('user_status', result.status);
+
+                            // 跳转到应用主页
+                            window.location.href = 'http://43.139.19.144:3003/';
+                        } else {
+                            // 未激活用户跳转回预发布页面
+                            window.location.href = 'index_tech.html';
+                        }
+                    }, 1000);
                 } else {
-                    let errorMessage = '登录失败，请检查邮箱和密码';
+                    let errorMessage = '登录失败，请检查用户名和密码';
                     if (response.status === 400) {
-                        errorMessage = result.message || '邮箱或密码错误';
+                        errorMessage = result.message || '用户名或密码错误';
                     } else if (response.status === 429) {
                         errorMessage = '登录尝试过于频繁，请稍后再试';
                     } else if (response.status === 500) {
@@ -424,13 +474,22 @@
                     } else {
                         errorMessage = result.message || errorMessage;
                     }
-                    showToast(errorMessage, 'error');
+
+                    // 根据错误类型显示在对应字段下方
+                    if (errorMessage.includes('用户名') || errorMessage.includes('username')) {
+                        showError('loginUsernameError', errorMessage);
+                    } else if (errorMessage.includes('密码') || errorMessage.includes('password')) {
+                        showError('loginPasswordError', errorMessage);
+                    } else {
+                        showError('loginUsernameError', errorMessage); // 默认显示在用户名字段下方
+                    }
                 }
             } catch (error) {
-                showToast('网络错误，请检查网络连接后重试', 'error');
+                showError('loginUsernameError', '网络错误，请检查网络连接后重试');
                 console.error('Login error:', error);
             } finally {
                 submitBtn.disabled = false;
+                submitBtn.classList.remove('btn-loading');
                 submitBtn.textContent = '登录';
             }
         });

@@ -347,6 +347,39 @@
             color: #888;
         }
 
+        .error-message {
+            color: #ff5050;
+            font-size: 13px;
+            margin-top: 4px;
+            font-weight: 500;
+            display: none;
+        }
+
+        /* Loading animation */
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         .toast-container {
             position: fixed;
             top: 24px;
@@ -372,7 +405,16 @@
             opacity: 1;
             transform: translateY(0);
         }
-        .toast.success { border-color: rgba(0, 212, 255, 0.45); }
+        .toast.success {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.95), rgba(22, 163, 74, 0.95));
+            border-color: rgba(34, 197, 94, 0.8);
+            box-shadow: 0 0 25px rgba(34, 197, 94, 0.4), 0 0 40px rgba(34, 197, 94, 0.2);
+            color: white;
+            font-weight: 600;
+            font-size: 15px;
+            padding: 16px 20px;
+            min-width: 320px;
+        }
         .toast.error { border-color: rgba(255, 80, 100, 0.45); color: #ffd7dc; }
         .toast.info { border-color: rgba(0, 212, 255, 0.25); }
         .toast.hide { opacity: 0; transform: translateY(-6px); }
@@ -853,7 +895,7 @@
             <p class="hero-subtitle">严肃的科研工作需要100%的可验证性</p>
             <div class="hero-buttons">
                 <a href="mock_demo.html" class="btn-primary">进入应用</a>
-                <a href="#register" class="btn-secondary">申请试用</a>
+                <a href="#" class="btn-secondary" id="heroApplyBtn" onclick="handleApplyClick(event)">申请试用</a>
             </div>
         </div>
     </section>
@@ -1003,6 +1045,7 @@
                         <div class="form-group">
                             <label class="form-label">邮箱地址</label>
                             <input type="email" class="form-input" id="registerEmail" placeholder="your@email.com" required>
+                            <div class="error-message" id="emailError"></div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">验证码</label>
@@ -1010,14 +1053,17 @@
                                 <input type="text" class="form-input" id="verifyCode" placeholder="请输入邮箱验证码" required style="flex: 1;">
                                 <button type="button" class="btn-send-code" id="sendCodeBtn" onclick="sendVerificationCode()">发送验证码</button>
                             </div>
+                            <div class="error-message" id="verifyCodeError"></div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">用户名</label>
-                            <input type="text" class="form-input" placeholder="选择一个用户名" required>
+                            <input type="text" class="form-input" id="registerUsername" placeholder="选择一个用户名" required>
+                            <div class="error-message" id="usernameError"></div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">密码</label>
                             <input type="password" class="form-input" id="registerPassword" placeholder="至少8个字符" required>
+                            <div class="error-message" id="passwordError"></div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">邀请码（可选）</label>
@@ -1080,7 +1126,7 @@
                     <h3>产品</h3>
                     <a href="mock_demo.html">Web 应用</a>
                     <a href="#roadmap">产品路线</a>
-                    <a href="#register">申请试用</a>
+                    <a href="#" id="footerApplyBtn" onclick="handleApplyClick(event)">申请试用</a>
                 </div>
                 <div class="footer-section">
                     <h3>关于</h3>
@@ -1149,27 +1195,96 @@
         let joinCodeSent = false;
         let joinCountdownTimer = null;
 
-        // 检查登录状态并更新导航栏
+        // 显示/隐藏错误信息
+        function showError(elementId, message) {
+            const errorEl = document.getElementById(elementId);
+            if (errorEl) {
+                errorEl.textContent = message;
+                errorEl.style.display = message ? 'block' : 'none';
+            }
+        }
+
+        function clearAllErrors() {
+            const errorElements = document.querySelectorAll('.error-message');
+            errorElements.forEach(el => {
+                el.textContent = '';
+                el.style.display = 'none';
+            });
+        }
+
+        // 处理申请试用按钮点击
+        function handleApplyClick(event) {
+            event.preventDefault();
+            const token = localStorage.getItem('access_token');
+            const status = localStorage.getItem('user_status');
+
+            if (token) {
+                if (status === 'inactive') {
+                    showToast('您已在等待列表中，我们会尽快通过邮件通知您开通访问权限。', 'info');
+                } else if (status === 'active') {
+                    // 激活用户不应该看到这个按钮，但如果看到了，跳转到应用
+                    showToast('正在跳转到应用...', 'info');
+                    window.location.href = 'http://43.139.19.144:3003/';
+                }
+            } else {
+                // 未登录用户跳转到注册
+                document.getElementById('register').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // 检查登录状态并更新导航栏和页面内容
         function updateNavigation() {
             const token = localStorage.getItem('access_token');
             const status = localStorage.getItem('user_status');
             const nav = document.querySelector('.header-nav');
+            const registerSection = document.getElementById('register');
 
             if (token) {
-                // 用户已登录
-                const statusText = status === 'active' ? '已激活' : '待激活';
-                const statusColor = status === 'active' ? '#00d4ff' : '#ffa500';
+                // 用户已登录 - 隐藏注册部分
+                if (registerSection) {
+                    registerSection.style.display = 'none';
+                }
 
-                nav.innerHTML = `
+                // 控制申请试用按钮的显示
+                const heroApplyBtn = document.getElementById('heroApplyBtn');
+                const footerApplyBtn = document.getElementById('footerApplyBtn');
+
+                if (status === 'active') {
+                    // 激活用户隐藏申请试用按钮
+                    if (heroApplyBtn) heroApplyBtn.style.display = 'none';
+                    if (footerApplyBtn) footerApplyBtn.style.display = 'none';
+                } else {
+                    // 未激活用户显示按钮
+                    if (heroApplyBtn) heroApplyBtn.style.display = 'inline-block';
+                    if (footerApplyBtn) footerApplyBtn.style.display = 'block';
+                }
+
+                // 更新导航栏
+                let navContent = `
                     <a href="#roadmap" class="nav-link">产品路线</a>
                     <a href="#join" class="nav-link">加入我们</a>
-                    <span class="user-status" style="color: ${statusColor}; font-size: 14px;">
-                        ${statusText}
-                    </span>
-                    <a href="#" class="nav-link" onclick="logout(event)">退出</a>
                 `;
+
+                // 只有未激活用户才显示状态
+                if (status === 'inactive') {
+                    navContent += `<span class="user-status" style="color: #ffa500; font-size: 14px;">未激活</span>`;
+                }
+
+                navContent += `<a href="#" class="nav-link" onclick="logout(event)">退出</a>`;
+
+                nav.innerHTML = navContent;
             } else {
-                // 用户未登录
+                // 用户未登录 - 显示注册部分和申请试用按钮
+                if (registerSection) {
+                    registerSection.style.display = 'block';
+                }
+
+                const heroApplyBtn = document.getElementById('heroApplyBtn');
+                const footerApplyBtn = document.getElementById('footerApplyBtn');
+                if (heroApplyBtn) heroApplyBtn.style.display = 'inline-block';
+                if (footerApplyBtn) footerApplyBtn.style.display = 'block';
+
+                // 更新导航栏
                 nav.innerHTML = `
                     <a href="#roadmap" class="nav-link">产品路线</a>
                     <a href="#join" class="nav-link">加入我们</a>
@@ -1245,6 +1360,11 @@
         return;
     }
 
+            // 立即设置按钮加载状态
+            sendBtn.disabled = true;
+            sendBtn.classList.add('btn-loading');
+            sendBtn.textContent = '发送中...';
+
             try {
                 const response = await fetch('http://localhost:8000/api/verification_code', {
                     method: 'POST',
@@ -1291,10 +1411,20 @@
                     }
 
                     showToast(errorMessage, 'error');
+
+                    // 重置按钮状态
+                    sendBtn.disabled = false;
+                    sendBtn.classList.remove('btn-loading');
+                    sendBtn.textContent = '发送验证码';
                 }
             } catch (error) {
                 showToast('网络错误，请重试', 'error');
                 console.error('Send verification code error:', error);
+
+                // 重置按钮状态
+                sendBtn.disabled = false;
+                sendBtn.classList.remove('btn-loading');
+                sendBtn.textContent = '发送验证码';
             }
         }
 
@@ -1379,8 +1509,11 @@
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
+            // 清除所有错误信息
+            clearAllErrors();
+
             const email = document.getElementById('registerEmail').value;
-            const username = document.querySelector('input[placeholder="选择一个用户名"]').value;
+            const username = document.getElementById('registerUsername').value;
             const verifyCode = document.getElementById('verifyCode').value;
             const password = document.getElementById('registerPassword').value;
             const inviteCode = document.getElementById('inviteCode').value;
@@ -1388,46 +1521,57 @@
             // 邮箱验证
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
-                showToast('请输入有效的邮箱地址', 'error');
+                showError('emailError', '请输入有效的邮箱地址');
                 return;
             }
 
             // 验证码检查
             if (!sentVerificationCode) {
-                showToast('请先发送验证码', 'error');
+                showError('verifyCodeError', '请先发送验证码');
                 return;
             }
 
             if (!verifyCode) {
-                showToast('请输入验证码', 'error');
+                showError('verifyCodeError', '请输入验证码');
+                return;
+            }
+
+            // 用户名检查
+            if (!username) {
+                showError('usernameError', '请输入用户名');
                 return;
             }
 
             // 密码强度检查
             if (password.length < 8) {
-                showToast('密码至少需要8个字符', 'error');
+                showError('passwordError', '密码至少需要8个字符');
                 return;
             }
 
             // 检查过于简单的密码
             const weakPasswords = ['12345678', '123456789', '11111111', '00000000', 'password', 'qwertyui', '88888888', '66666666'];
             if (weakPasswords.includes(password.toLowerCase())) {
-                showToast('密码过于简单，请设置更复杂的密码', 'error');
+                showError('passwordError', '密码过于简单，请设置更复杂的密码');
                 return;
             }
 
             // 检查是否全是数字
             if (/^\d+$/.test(password)) {
-                showToast('密码不能全是数字，请包含字母或特殊字符', 'error');
+                showError('passwordError', '密码不能全是数字，请包含字母或特殊字符');
                 return;
             }
 
             // 检查是否全是相同字符
             if (/^(.)\1+$/.test(password)) {
-                showToast('密码不能全是相同字符', 'error');
+                showError('passwordError', '密码不能全是相同字符');
                 return;
             }
 
+            // 立即设置按钮加载状态
+            const submitBtn = this.querySelector('.submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('btn-loading');
+            submitBtn.textContent = '注册中...';
 
             try {
                 const response = await fetch('http://localhost:8000/api/complete_registration', {
@@ -1446,9 +1590,11 @@
 
                 if (response.ok && result.success) {
                     if (result.type === 'active') {
-                        showToast('注册成功！正在跳转到应用...', 'success');
-                        // TODO: 跳转到应用页面
-                        // window.location.href = '/app';
+                        showToast('注册成功！正在跳转到登录页面...', 'success');
+                        // 跳转到登录页面
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 1500);
                     } else if (result.type === 'inactive') {
                         showToast('注册成功！您已加入等候名单，我们会尽快通过邮件通知您开通访问权限。', 'success');
                         // 清空表单
@@ -1459,6 +1605,10 @@
                             document.getElementById('sendCodeBtn').disabled = false;
                             document.getElementById('sendCodeBtn').textContent = '发送验证码';
                         }
+                        // 跳转到登录页面
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 2000);
                     }
                 } else {
                     // 处理错误响应
@@ -1474,12 +1624,27 @@
                         errorMessage = result.message || errorMessage;
                     }
 
-                    showToast(errorMessage, 'error');
+                    // 根据错误类型显示在对应字段下方
+                    if (errorMessage.includes('邮箱') || errorMessage.includes('email')) {
+                        showError('emailError', errorMessage);
+                    } else if (errorMessage.includes('验证码') || errorMessage.includes('code')) {
+                        showError('verifyCodeError', errorMessage);
+                    } else if (errorMessage.includes('用户名') || errorMessage.includes('username')) {
+                        showError('usernameError', errorMessage);
+                    } else if (errorMessage.includes('密码') || errorMessage.includes('password')) {
+                        showError('passwordError', errorMessage);
+                    } else {
+                        showError('emailError', errorMessage); // 默认显示在邮箱字段下方
+                    }
                 }
             } catch (error) {
-                showToast('网络错误，请检查网络连接后重试', 'error');
+                showError('emailError', '网络错误，请检查网络连接后重试');
                 console.error('Registration error:', error);
 
+                // 重置按钮状态
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('btn-loading');
+                submitBtn.textContent = '注册';
             }
         });
 
@@ -1512,6 +1677,7 @@
             const submitBtn = this.querySelector('.submit-btn');
             if (submitBtn) {
                 submitBtn.disabled = true;
+                submitBtn.classList.add('btn-loading');
                 submitBtn.textContent = '验证中...';
             }
 
@@ -1567,6 +1733,7 @@
             } finally {
                 if (submitBtn) {
                     submitBtn.disabled = false;
+                    submitBtn.classList.remove('btn-loading');
                     submitBtn.textContent = '提交申请';
                 }
             }
