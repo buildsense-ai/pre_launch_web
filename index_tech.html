@@ -839,7 +839,8 @@
                 <nav class="header-nav">
                     <a href="#roadmap" class="nav-link">产品路线</a>
                     <a href="#join" class="nav-link">加入我们</a>
-                    <button class="btn-login" onclick="scrollToRegister()">注册/登录</button>
+                    <a href="login.html" class="nav-link">登录</a>
+                    <button class="btn-login" onclick="scrollToRegister()">注册</button>
                 </nav>
             </div>
         </div>
@@ -1148,44 +1149,153 @@
         let joinCodeSent = false;
         let joinCountdownTimer = null;
 
+        // 检查登录状态并更新导航栏
+        function updateNavigation() {
+            const token = localStorage.getItem('access_token');
+            const status = localStorage.getItem('user_status');
+            const nav = document.querySelector('.header-nav');
+
+            if (token) {
+                // 用户已登录
+                const statusText = status === 'active' ? '已激活' : '待激活';
+                const statusColor = status === 'active' ? '#00d4ff' : '#ffa500';
+
+                nav.innerHTML = `
+                    <a href="#roadmap" class="nav-link">产品路线</a>
+                    <a href="#join" class="nav-link">加入我们</a>
+                    <span class="user-status" style="color: ${statusColor}; font-size: 14px;">
+                        ${statusText}
+                    </span>
+                    <a href="#" class="nav-link" onclick="logout(event)">退出</a>
+                `;
+            } else {
+                // 用户未登录
+                nav.innerHTML = `
+                    <a href="#roadmap" class="nav-link">产品路线</a>
+                    <a href="#join" class="nav-link">加入我们</a>
+                    <a href="login.html" class="nav-link">登录</a>
+                    <button class="btn-login" onclick="scrollToRegister()">注册</button>
+                `;
+            }
+        }
+
+        // 退出登录
+        async function logout(event) {
+            event.preventDefault();
+            const token = localStorage.getItem('access_token');
+
+            if (!token) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('token_type');
+                localStorage.removeItem('user_status');
+                updateNavigation();
+                showToast('已退出登录', 'info');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('token_type');
+                localStorage.removeItem('user_status');
+
+                if (response.ok) {
+                    showToast('退出登录成功', 'success');
+                } else {
+                    showToast('本地已退出登录', 'info');
+                }
+
+                updateNavigation();
+            } catch (error) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('token_type');
+                localStorage.removeItem('user_status');
+                showToast('网络错误，已清除本地登录信息', 'error');
+                updateNavigation();
+            }
+        }
+
         // Smooth scroll
         function scrollToRegister() {
             document.getElementById('register').scrollIntoView({ behavior: 'smooth' });
         }
 
         // 发送验证码
-        function sendVerificationCode() {
+        async function sendVerificationCode() {
             const email = document.getElementById('registerEmail').value;
+            const username = document.querySelector('input[placeholder="选择一个用户名"]').value;
             const sendBtn = document.getElementById('sendCodeBtn');
-            
+
             // 邮箱验证
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!email || !emailRegex.test(email)) {
                 showToast('请先输入有效的邮箱地址', 'error');
                 return;
             }
-            
-            // 生成6位验证码（模拟）
-            sentVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-            
-            // TODO: 这里实际应该调用后端API发送邮件
-            showToast('验证码已发送到您的邮箱（模拟）\n验证码：' + sentVerificationCode, 'success');
-            
-            // 开始倒计时
-            let countdown = 60;
-            sendBtn.disabled = true;
-            sendBtn.textContent = countdown + '秒后重发';
-            
-            countdownTimer = setInterval(() => {
-                countdown--;
-                if (countdown > 0) {
+
+    if (!username) {
+        showToast('请先填写用户名', 'error');
+        return;
+    }
+
+            try {
+                const response = await fetch('http://localhost:8000/api/verification_code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        username: username
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    sentVerificationCode = 'sent'; // 标记已发送，后端验证
+                    showToast('验证码已发送到您的邮箱，请查收', 'success');
+
+                    // 开始倒计时
+                    let countdown = 60;
+                    sendBtn.disabled = true;
                     sendBtn.textContent = countdown + '秒后重发';
+
+                    countdownTimer = setInterval(() => {
+                        countdown--;
+                        if (countdown > 0) {
+                            sendBtn.textContent = countdown + '秒后重发';
+                        } else {
+                            clearInterval(countdownTimer);
+                            sendBtn.disabled = false;
+                            sendBtn.textContent = '发送验证码';
+                        }
+                    }, 1000);
                 } else {
-                    clearInterval(countdownTimer);
-                    sendBtn.disabled = false;
-                    sendBtn.textContent = '发送验证码';
+                    // 处理错误响应
+                    let errorMessage = '发送验证码失败，请重试';
+
+                    if (response.status === 400) {
+                        errorMessage = result.message || '邮箱或用户名格式不正确';
+                    } else if (response.status === 429) {
+                        errorMessage = '发送过于频繁，请稍后再试';
+                    } else if (response.status === 500) {
+                        errorMessage = '服务器内部错误，请稍后重试';
+                    } else {
+                        errorMessage = result.message || errorMessage;
+                    }
+
+                    showToast(errorMessage, 'error');
                 }
-            }, 1000);
+            } catch (error) {
+                showToast('网络错误，请重试', 'error');
+                console.error('Send verification code error:', error);
+            }
         }
 
         async function sendJoinVerificationCode() {
@@ -1266,62 +1376,110 @@
         }
 
         // Register form
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const email = document.getElementById('registerEmail').value;
+            const username = document.querySelector('input[placeholder="选择一个用户名"]').value;
             const verifyCode = document.getElementById('verifyCode').value;
             const password = document.getElementById('registerPassword').value;
             const inviteCode = document.getElementById('inviteCode').value;
-            
+
             // 邮箱验证
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 showToast('请输入有效的邮箱地址', 'error');
                 return;
             }
-            
+
             // 验证码检查
             if (!sentVerificationCode) {
                 showToast('请先发送验证码', 'error');
                 return;
             }
-            
-            if (verifyCode !== sentVerificationCode) {
-                showToast('验证码错误，请重新输入', 'error');
+
+            if (!verifyCode) {
+                showToast('请输入验证码', 'error');
                 return;
             }
-            
+
             // 密码强度检查
             if (password.length < 8) {
                 showToast('密码至少需要8个字符', 'error');
                 return;
             }
-            
+
             // 检查过于简单的密码
             const weakPasswords = ['12345678', '123456789', '11111111', '00000000', 'password', 'qwertyui', '88888888', '66666666'];
             if (weakPasswords.includes(password.toLowerCase())) {
                 showToast('密码过于简单，请设置更复杂的密码', 'error');
                 return;
             }
-            
+
             // 检查是否全是数字
             if (/^\d+$/.test(password)) {
                 showToast('密码不能全是数字，请包含字母或特殊字符', 'error');
                 return;
             }
-            
+
             // 检查是否全是相同字符
             if (/^(.)\1+$/.test(password)) {
                 showToast('密码不能全是相同字符', 'error');
                 return;
             }
-            
-            // 验证通过
-            if (inviteCode) {
-                showToast('注册成功！正在跳转到应用...', 'success');
-            } else {
-                showToast('注册成功！您已加入等候名单，我们会尽快通过邮件通知您开通访问权限。', 'success');
+
+
+            try {
+                const response = await fetch('http://localhost:8000/api/complete_registration', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        username: username,
+                        password: password,
+                        verification_code: verifyCode,
+                        invitation_code: inviteCode || null
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    if (result.type === 'active') {
+                        showToast('注册成功！正在跳转到应用...', 'success');
+                        // TODO: 跳转到应用页面
+                        // window.location.href = '/app';
+                    } else if (result.type === 'inactive') {
+                        showToast('注册成功！您已加入等候名单，我们会尽快通过邮件通知您开通访问权限。', 'success');
+                        // 清空表单
+                        this.reset();
+                        sentVerificationCode = null;
+                        if (countdownTimer) {
+                            clearInterval(countdownTimer);
+                            document.getElementById('sendCodeBtn').disabled = false;
+                            document.getElementById('sendCodeBtn').textContent = '发送验证码';
+                        }
+                    }
+                } else {
+                    // 处理错误响应
+                    let errorMessage = '注册失败，请重试';
+
+                    if (response.status === 400) {
+                        errorMessage = result.message || '输入信息有误，请检查后重试';
+                    } else if (response.status === 429) {
+                        errorMessage = '请求过于频繁，请稍后再试';
+                    } else if (response.status === 500) {
+                        errorMessage = '服务器内部错误，请稍后重试';
+                    } else {
+                        errorMessage = result.message || errorMessage;
+                    }
+
+                    showToast(errorMessage, 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，请检查网络连接后重试', 'error');
+                console.error('Registration error:', error);
+
             }
         });
 
@@ -1539,6 +1697,9 @@
                 }
             });
         });
+
+        // 页面加载时更新导航栏
+        document.addEventListener('DOMContentLoaded', updateNavigation);
     </script>
 </body>
 </html>

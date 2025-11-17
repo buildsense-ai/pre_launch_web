@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - buildsense</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #000000;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            max-width: 400px;
+            width: 100%;
+            padding: 40px;
+            background: #1a1a1a;
+            border: 1px solid rgba(0, 212, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.05);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 28px;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+
+        .login-title {
+            text-align: center;
+            margin-bottom: 24px;
+            color: #d1d5db;
+            font-size: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #d1d5db;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 6px;
+            font-size: 14px;
+            background: #0a0a0a;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+        }
+
+        .form-input::placeholder {
+            color: #666;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 16px;
+        }
+
+        .login-btn:hover {
+            background: #00b8e6;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .login-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .forgot-password {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .forgot-password a {
+            color: #00d4ff;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .forgot-password a:hover {
+            color: #00b8e6;
+        }
+
+        .register-link {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .register-link a {
+            color: #00d4ff;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .register-link a:hover {
+            color: #00b8e6;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #00d4ff;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: #00b8e6;
+        }
+
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .toast {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            min-width: 280px;
+            max-width: 480px;
+            padding: 12px 16px;
+            background: rgba(0,0,0,0.85);
+            border: 1px solid rgba(0, 212, 255, 0.25);
+            border-radius: 10px;
+            color: #e5e7eb;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+            transition: opacity .2s ease, transform .2s ease;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast.success { border-color: rgba(0, 212, 255, 0.45); }
+        .toast.error { border-color: rgba(255, 80, 100, 0.45); color: #ffd7dc; }
+        .toast.info { border-color: rgba(0, 212, 255, 0.25); }
+        .toast.hide { opacity: 0; transform: translateY(-6px); }
+        .toast-message { flex: 1; white-space: pre-line; font-size: 14px; }
+        .toast-close {
+            background: none;
+            border: none;
+            color: #00d4ff;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+
+        .user-info {
+            margin-bottom: 24px;
+        }
+
+        .status-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 16px;
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 8px;
+            font-size: 16px;
+            color: #d1d5db;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+    </style>
+</head>
+<body>
+    <a href="index_tech.html" class="back-link">← 返回首页</a>
+
+    <!-- 登录表单容器 -->
+    <div class="login-container" id="loginContainer">
+        <div class="logo">buildsense</div>
+        <h1 class="login-title">登录账户</h1>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label class="form-label">用户名</label>
+                <input type="text" class="form-input" id="loginUsername" placeholder="请输入用户名" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">密码</label>
+                <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码" required>
+            </div>
+            <button type="submit" class="login-btn">登录</button>
+        </form>
+
+        <div class="forgot-password">
+            <a href="forgot-password.html">忘记密码？</a>
+        </div>
+
+        <div class="register-link">
+            <span style="color: #666; font-size: 14px;">还没有账户？</span>
+            <a href="index_tech.html#register">立即注册</a>
+        </div>
+    </div>
+
+    <!-- 用户信息容器 -->
+    <div class="login-container" id="userContainer" style="display: none;">
+        <div class="logo">buildsense</div>
+        <h1 class="login-title">账户信息</h1>
+
+        <div class="user-info">
+            <div class="status-info">
+                <span>账户状态：</span>
+                <span id="userStatus">未知</span>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button onclick="enterApp()" class="login-btn" id="enterAppBtn" style="display: none;">进入应用</button>
+            <button onclick="logout()" class="login-btn" style="background: #666; margin-top: 12px;">退出登录</button>
+        </div>
+
+        <div class="register-link" style="margin-top: 20px;">
+            <a href="index_tech.html" style="color: #00d4ff;">返回首页</a>
+        </div>
+    </div>
+
+    <script>
+        // 检查登录状态
+        function checkLoginStatus() {
+            const token = localStorage.getItem('access_token');
+            const status = localStorage.getItem('user_status');
+
+            if (token) {
+                // 用户已登录，显示用户信息和退出按钮
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('userContainer').style.display = 'block';
+
+                const statusText = status === 'active' ? '已激活' : '待激活';
+                const statusColor = status === 'active' ? '#00d4ff' : '#ffa500';
+
+                document.getElementById('userStatus').textContent = statusText;
+                document.getElementById('userStatus').style.color = statusColor;
+
+                // 如果已激活，可以显示进入应用的按钮
+                if (status === 'active') {
+                    document.getElementById('enterAppBtn').style.display = 'block';
+                }
+            }
+        }
+
+        // 退出登录
+        async function logout() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                // 没有token，直接清除本地存储
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('token_type');
+                localStorage.removeItem('user_status');
+                showToast('已退出登录', 'info');
+                checkLoginStatus();
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                // 无论后端响应如何，都清除本地存储
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('token_type');
+                localStorage.removeItem('user_status');
+
+                if (response.ok) {
+                    showToast('退出登录成功', 'success');
+                } else {
+                    showToast('本地已退出登录', 'info');
+                }
+
+                checkLoginStatus();
+            } catch (error) {
+                // 网络错误时也清除本地存储
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('token_type');
+                localStorage.removeItem('user_status');
+                showToast('网络错误，已清除本地登录信息', 'error');
+                checkLoginStatus();
+            }
+        }
+
+        // 进入应用
+        function enterApp() {
+            showToast('正在进入应用...', 'info');
+            // TODO: 跳转到应用页面
+            // window.location.href = '/app';
+        }
+
+        // Toast notification system
+        function showToast(message, type = 'info', duration = 3600) {
+            let container = document.getElementById('toastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toastContainer';
+                container.className = 'toast-container';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            const msg = document.createElement('div');
+            msg.className = 'toast-message';
+            msg.textContent = message;
+            const close = document.createElement('button');
+            close.className = 'toast-close';
+            close.textContent = '×';
+            close.onclick = function() { toast.classList.add('hide'); setTimeout(function(){ toast.remove(); }, 200); };
+            toast.appendChild(msg);
+            toast.appendChild(close);
+            container.appendChild(toast);
+            setTimeout(function(){ toast.classList.add('hide'); setTimeout(function(){ toast.remove(); }, 200); }, duration);
+        }
+
+        // Login form submission
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!username || !password) {
+                showToast('请填写完整的登录信息', 'error');
+                return;
+            }
+
+            const submitBtn = this.querySelector('.login-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '登录中...';
+
+            try {
+                const response = await fetch('http://localhost:8000/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: email,  // 使用邮箱作为用户名
+                        password: password
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.access_token) {
+                    // 保存token和用户状态
+                    localStorage.setItem('access_token', result.access_token);
+                    localStorage.setItem('token_type', result.token_type || 'bearer');
+                    localStorage.setItem('user_status', result.status);
+
+                    if (result.status === 'active') {
+                        showToast('登录成功！正在跳转到应用...', 'success');
+                        // TODO: 跳转到应用页面
+                        // window.location.href = '/app';
+                    } else {
+                        showToast('登录成功！您的账户尚未激活，请等待管理员审核。', 'info');
+                        // 可以跳转到个人中心或显示等待页面
+                        // window.location.href = '/dashboard';
+                    }
+                } else {
+                    let errorMessage = '登录失败，请检查邮箱和密码';
+                    if (response.status === 400) {
+                        errorMessage = result.message || '邮箱或密码错误';
+                    } else if (response.status === 429) {
+                        errorMessage = '登录尝试过于频繁，请稍后再试';
+                    } else if (response.status === 500) {
+                        errorMessage = '服务器内部错误，请稍后重试';
+                    } else {
+                        errorMessage = result.message || errorMessage;
+                    }
+                    showToast(errorMessage, 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，请检查网络连接后重试', 'error');
+                console.error('Login error:', error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '登录';
+            }
+        });
+
+        // 页面加载时检查登录状态
+        document.addEventListener('DOMContentLoaded', checkLoginStatus);
+    </script>
+</body>
+</html>
