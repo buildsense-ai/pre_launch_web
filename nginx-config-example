@@ -1,0 +1,44 @@
+# Nginx配置 - 保存为 /etc/nginx/sites-available/prelaunch
+
+server {
+    listen 3003;
+    server_name 43.139.19.144;
+
+    # 应用主页 (如果有的话)
+    location / {
+        # 这里配置你的应用
+        # 如果应用也在3003端口，配置proxy_pass
+        # proxy_pass http://localhost:3000;
+
+        # 或者返回一个简单的页面
+        return 200 "Application Homepage - Coming Soon";
+        add_header Content-Type text/plain;
+    }
+
+    # 预发布页面
+    location /prelaunch/ {
+        alias /usr/gaosivenv/yunqi/pre_launch_web/;
+        index index.html;
+
+        # 静态资源优化
+        location ~* \.(png|jpg|jpeg|gif|ico|svg)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+            add_header Access-Control-Allow-Origin *;
+        }
+
+        # 允许跨域 (如果需要)
+        add_header Access-Control-Allow-Origin *;
+        add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
+        add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization";
+
+        # 处理OPTIONS预检请求
+        if ($request_method = 'OPTIONS') {
+            return 204;
+        }
+    }
+
+    # 日志
+    access_log /var/log/nginx/prelaunch_access.log;
+    error_log /var/log/nginx/prelaunch_error.log;
+}
