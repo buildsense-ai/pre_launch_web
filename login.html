@@ -354,8 +354,14 @@
         function enterApp() {
             showToast('正在进入应用...', 'info');
 
-            // 直接跳转到应用页面，token已经存储在localStorage中
-            window.location.href = '/';
+            // 根据环境跳转
+            const isLocalhost = window.location.hostname === 'localhost' ||
+                               window.location.hostname === '127.0.0.1';
+            if (isLocalhost) {
+                window.location.href = '/index.html';
+            } else {
+                window.location.href = '/';
+            }
         }
 
         // 显示/隐藏错误信息
@@ -451,16 +457,27 @@
                     setTimeout(() => {
                         if (result.status === 'active') {
                             // 激活用户跳转到应用主页
-                            // 现在同域，可以直接跳转，token已经存储在localStorage中
                             const token = result.access_token;
                             localStorage.setItem('token', token); // 存储为应用期望的格式
                             localStorage.setItem('user_status', result.status);
 
-                            // 跳转到应用主页
-                            window.location.href = '/';
+                            // 本地测试时跳转到根目录，生产环境跳转到应用主页
+                            const isLocalhost = window.location.hostname === 'localhost' ||
+                                               window.location.hostname === '127.0.0.1';
+                            if (isLocalhost) {
+                                window.location.href = '/index.html';
+                            } else {
+                                window.location.href = '/';
+                            }
                         } else {
                             // 未激活用户跳转回预发布页面
-                            window.location.href = '/prelaunch/';
+                            const isLocalhost = window.location.hostname === 'localhost' ||
+                                               window.location.hostname === '127.0.0.1';
+                            if (isLocalhost) {
+                                window.location.href = '/index.html';
+                            } else {
+                                window.location.href = '/prelaunch/';
+                            }
                         }
                     }, 1000);
                 } else {

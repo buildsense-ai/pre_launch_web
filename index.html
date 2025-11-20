@@ -894,7 +894,7 @@
             <h1>将零散的研究资料<br>转化为可以直接交付的专业报告</h1>
             <p class="hero-subtitle">严肃的科研工作需要100%的可验证性</p>
             <div class="hero-buttons">
-                <a href="mock_demo.html" class="btn-primary">进入应用</a>
+                <a href="http://43.139.19.144:3003/" class="btn-primary" onclick="handleAppClick(event)">进入应用</a>
                 <a href="#" class="btn-secondary" id="heroApplyBtn" onclick="handleApplyClick(event)">申请试用</a>
             </div>
         </div>
@@ -1124,7 +1124,7 @@
                 </div>
                 <div class="footer-section">
                     <h3>产品</h3>
-                    <a href="mock_demo.html">Web 应用</a>
+                    <a href="http://43.139.19.144:3003/" onclick="handleAppClick(event)">Web 应用</a>
                     <a href="#roadmap">产品路线</a>
                     <a href="#" id="footerApplyBtn" onclick="handleApplyClick(event)">申请试用</a>
                 </div>
@@ -1224,12 +1224,48 @@
                 } else if (status === 'active') {
                     // 激活用户不应该看到这个按钮，但如果看到了，跳转到应用
                     showToast('正在跳转到应用...', 'info');
-                    window.location.href = '/';
+                    const isLocalhost = window.location.hostname === 'localhost' ||
+                                       window.location.hostname === '127.0.0.1';
+                    if (isLocalhost) {
+                        window.location.href = '/index.html';
+                    } else {
+                        window.location.href = '/';
+                    }
                 }
             } else {
                 // 未登录用户跳转到注册
                 document.getElementById('register').scrollIntoView({ behavior: 'smooth' });
             }
+        }
+
+        // 处理进入应用按钮点击
+        function handleAppClick(event) {
+            const token = localStorage.getItem('access_token');
+            const status = localStorage.getItem('user_status');
+
+            if (!token) {
+                event.preventDefault();
+                showToast('请先登录后再进入应用', 'error');
+                // 跳转到登录页面
+                const isLocalhost = window.location.hostname === 'localhost' ||
+                                   window.location.hostname === '127.0.0.1';
+                if (isLocalhost) {
+                    window.location.href = '/login.html';
+                } else {
+                    window.location.href = '/prelaunch/login.html';
+                }
+                return false;
+            }
+
+            if (status !== 'active') {
+                event.preventDefault();
+                showToast('您的账户尚未激活，请等待管理员审核', 'error');
+                return false;
+            }
+
+            // 激活用户可以跳转到主应用
+            showToast('正在跳转到应用...', 'info');
+            return true; // 允许链接跳转
         }
 
         // 检查登录状态并更新导航栏和页面内容
@@ -1593,7 +1629,13 @@
                         showToast('注册成功！正在跳转到登录页面...', 'success');
                         // 跳转到登录页面
                         setTimeout(() => {
-                            window.location.href = 'login.html';
+                            const isLocalhost = window.location.hostname === 'localhost' ||
+                                               window.location.hostname === '127.0.0.1';
+                            if (isLocalhost) {
+                                window.location.href = '/login.html';
+                            } else {
+                                window.location.href = '/prelaunch/login.html';
+                            }
                         }, 1500);
                     } else if (result.type === 'inactive') {
                         showToast('注册成功！您已加入等候名单，我们会尽快通过邮件通知您开通访问权限。', 'success');
@@ -1607,7 +1649,13 @@
                         }
                         // 跳转到登录页面
                         setTimeout(() => {
-                            window.location.href = 'login.html';
+                            const isLocalhost = window.location.hostname === 'localhost' ||
+                                               window.location.hostname === '127.0.0.1';
+                            if (isLocalhost) {
+                                window.location.href = '/login.html';
+                            } else {
+                                window.location.href = '/prelaunch/login.html';
+                            }
                         }, 2000);
                     }
                 } else {

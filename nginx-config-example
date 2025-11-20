@@ -4,16 +4,37 @@ server {
     listen 3003;
     server_name 43.139.19.144;
 
-    # 应用主页 (如果有的话)
+    # React应用主页 - 代理到你的React应用
+    # 将React应用改为运行在3000端口，然后nginx代理
     location / {
-        # 这里配置你的应用
-        # 如果应用也在3003端口，配置proxy_pass
-        # proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Prefix /;
 
-        # 或者返回一个简单的页面
-        return 200 "Application Homepage - Coming Soon";
-        add_header Content-Type text/plain;
+        # WebSocket支持（如果React应用使用WebSocket）
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        # 处理React Router的客户端路由
+        try_files $uri $uri/ /index.html;
     }
+
+    # 方案2：如果想用nginx直接serve React构建文件，注释掉上面的location /，使用这个：
+    # location / {
+    #     alias /path/to/your/react/build/;
+    #     index index.html;
+    #     try_files $uri $uri/ /index.html;
+    #
+    #     # 处理React Router的客户端路由
+    #     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+    #         expires 1y;
+    #         add_header Cache-Control "public, immutable";
+    #     }
+    # }
 
     # 预发布页面
     location /prelaunch/ {
